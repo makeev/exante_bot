@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+
+.idea/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+
+# Environments
+.env
+
+# test dv
+*.sqlite*
+
+# local files
+*_local*
