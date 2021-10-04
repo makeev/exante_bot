@@ -3,6 +3,8 @@ from datetime import datetime
 
 import plotly.graph_objects as go
 
+from bots.stupid_bot import StupidBot
+from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, Event, HistoricalData
 
 application_id = 'e2b62931-4cf2-4b6f-a319-b94f1a6341f5'
@@ -15,8 +17,9 @@ time_interval = 60
 
 
 class Processor:
-    def __init__(self, historical_data: HistoricalData):
+    def __init__(self, historical_data: HistoricalData, bot):
         self.historical_data = historical_data
+        self.bot = bot
 
     async def on_event(self, data):
         e = Event(data)
@@ -42,7 +45,26 @@ async def main():
         fig = historical_data.get_plotly_figure()
         fig.show()
 
-        processor = Processor(historical_data)
+        # инициируем бота которого будем тестировать
+        params = {
+            'sma_size': 100,
+            'trend_len': 5,
+            'pinbar_size': 1.5,
+            'super_pinbar_size': None
+        }
+        bot = StupidBot(
+            money_manager=SimpleMoneyManager(
+                order_amount=0.3,
+                diff=100,
+                stop_loss_factor=1,
+                take_profit_factor=6,
+                trailing_stop=False
+            ),
+            historical_ohlcv=historical_data.get_list(),
+            **params
+        )
+
+        processor = Processor(historical_data, bot=bot)
 
         # await api.quote_stream('BTC.USD', processor)
         await api.quote_stream(symbol, processor.on_event)

@@ -1,0 +1,201 @@
+import asyncio
+import json
+from datetime import datetime
+from decimal import Decimal
+
+import plotly.graph_objects as go
+
+from bots.base import CandleStick
+from bots.stupid_bot import StupidBot
+from bots.stupid_bot.money_manager import SimpleMoneyManager
+from exante_api import ExanteApi, Event, HistoricalData
+
+application_id = 'e2b62931-4cf2-4b6f-a319-b94f1a6341f5'
+access_key = 'jf5ODSu3jZ8DQXhxdlTN'
+demo = True
+api = ExanteApi(application_id=application_id, access_key=access_key, demo=demo)
+symbol = 'EUR/USD.E.FX'
+# symbol = 'BTC.USD'
+time_interval = 300
+
+
+class Tester:
+    def __init__(self):
+        self.annotations = []
+        self.take_profit_deals = 0
+        self.stop_loss_deals = 0
+        self.profit = Decimal(0)
+        self.loss = Decimal(0)
+        self.drawdown = Decimal(0)
+        self.all_drawdowns = []
+
+    def get_profit_factor(self):
+        return '%.2f' % float(self.profit / self.loss) if self.loss else 0
+
+    def get_total_profit(self):
+        return self.profit - self.loss
+
+    def get_max_drawdown(self):
+        return max(self.all_drawdowns) if self.all_drawdowns else 0
+
+    def _handle_deal_profit(self, deal_profit, date, price):
+        if deal_profit >= 0:
+            self.annotations.append(
+                dict(
+                    x=date, y=price, xref='x', yref='y',
+                    showarrow=True, xanchor='center', text='+%.2f' % deal_profit,
+                    font=dict(color="green", size=16), arrowcolor="green",
+                    arrowhead=1, hovertext=str(deal_profit)
+                )
+            )
+            self.take_profit_deals += 1
+            self.profit += deal_profit
+            self.all_drawdowns.append(self.drawdown)
+            self.drawdown = Decimal(0)
+        else:
+            self.annotations.append(
+                dict(
+                    x=date, y=price, xref='x', yref='y',
+                    showarrow=True, xanchor='center', text='-%.2f' % deal_profit,
+                    font=dict(color="red"), arrowcolor="red",
+                    arrowhead=1, hovertext=str(deal_profit)
+                )
+            )
+            self.stop_loss_deals += 1
+            self.loss += abs(deal_profit)
+            self.drawdown += abs(deal_profit)
+
+    def _add_deal_to_chart(self, deal, date):
+        # наносим на график
+        self.annotations.append(
+            dict(
+                x=date, y=1, xref='x', yref='paper',
+                showarrow=True, xanchor='left', text=str(deal)
+            )
+        )
+        # рисуем stop loss и take profit
+        self.annotations.append(
+            dict(
+                x=date, y=deal.stop_loss, xref='x', yref='y',
+                showarrow=True, xanchor='center', text='sl',
+                font=dict(color="red"), arrowcolor="red",
+                arrowhead=2, hovertext=str(deal.stop_loss)
+            )
+        )
+        self.annotations.append(
+            dict(
+                x=date, y=deal.take_profit, xref='x', yref='y',
+                showarrow=True, xanchor='center', text='tp',
+                font=dict(color="green"), arrowcolor="green",
+                arrowhead=2, hovertext=str(deal.take_profit)
+            )
+        )
+
+    async def do(self):
+        try:
+            # r = await api.get_ohlcv(symbol, time_interval, size=5000)
+            # data = await r.json()
+            #
+            # with open('history_eur_usd.json', 'w+') as output_file:
+            #     json.dump(data, output_file)
+
+            with open("history.json", 'r') as json_file:
+                data = json.load(json_file)
+
+            # data = data[:2000]
+            historical_data = HistoricalData(time_interval, data)
+
+            # инициируем бота которого будем тестировать
+            params = {
+                'sma_size': 100,
+                'trend_len': 5,
+                'pinbar_size': 1.5,
+                'super_pinbar_size': None
+            }
+            bot = StupidBot(
+                money_manager=SimpleMoneyManager(
+                    order_amount=0.3,
+                    diff=Decimal(100),
+                    stop_loss_factor=1,
+                    take_profit_factor=6,
+                    trailing_stop=False
+                ),
+                historical_ohlcv=[],
+                **params
+            )
+
+            fig = historical_data.get_plotly_figure()
+            open_deal = None
+
+            for candle_data in historical_data.get_list():
+                candle = CandleStick(**candle_data)
+                price = candle.close
+                dt = candle.formatted_date
+
+                # проверяем открытую сделку
+                if open_deal:
+                    profit = open_deal.check(candle)
+                    if profit is not None:
+                        # закрываем сделку и наносим на график
+                        open_deal = None
+                        self._handle_deal_profit(profit, dt, price)
+
+                # добавляем свечку к историческим данным
+                bot.add_candle(candle)
+
+                # проверяем есть ли сигнал на сделку
+                possible_deal = await bot.check_price(price)
+                # есть сделка
+                if possible_deal:
+                    # если уже есть открытая сделка
+                    if open_deal:
+                        # если новая сделка в другую сторону
+                        if open_deal.side != possible_deal.side:
+                            # то закрываем старую сделку и открываем новую
+                            profit = open_deal.close(price)
+                            if profit is not None:
+                                # закрываем сделку и наносим на график
+                                self._handle_deal_profit(profit, dt, price)
+
+                            open_deal = possible_deal
+                            self._add_deal_to_chart(open_deal, dt)
+                        else:
+                            # сделка в ту же сторону что и уже открытая
+                            # @TODO возможно есть смысл переоткрыть сделку
+                            pass
+                    else:
+                        open_deal = possible_deal
+                        self._add_deal_to_chart(open_deal, dt)
+
+            fig.update_layout(annotations=self.annotations)
+            fig.show()
+            print("""
+            take_profit_deals: {take_profit_deals}
+            stop_loss_deals: {stop_loss_deals}
+            profit_factor: {profit_factor}
+            profit: {profit}
+            loss: {loss}
+            total profit: {total_profit}$
+            max_drawdown: {max_drawdown}
+            """.format(
+                take_profit_deals=self.take_profit_deals,
+                stop_loss_deals=self.stop_loss_deals,
+                profit_factor=self.get_profit_factor(),
+                profit=self.profit,
+                loss=self.loss,
+                total_profit=self.get_total_profit(),
+                max_drawdown=self.get_max_drawdown(),
+            ))
+        finally:
+            await api.close()
+
+
+async def main():
+    tester = Tester()
+    await tester.do()
+
+    print('done')
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

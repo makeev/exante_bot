@@ -98,3 +98,12 @@ class HistoricalData:
                            ),
         ])
         return fig
+
+    def get_list(self):
+        return [{
+            "timestamp": ts,
+            "open": row['open'],
+            "high": row['high'],
+            "low": row['low'],
+            "close": row['close']
+        } for ts, row in self.ohlc_data.items()]
