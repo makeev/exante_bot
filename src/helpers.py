@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import numpy as np
 
 from bots.base import Signal
@@ -19,3 +21,5 @@ def get_trend_for(data: list) -> int:
         return 0
 
 
+def get_mid_price(bid, ask):
+    return Decimal(ask) + (Decimal(bid) - Decimal(ask)) / 2
