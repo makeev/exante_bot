@@ -133,7 +133,7 @@ class BaseBot(ABC):
     last_price = []
 
     @abstractmethod
-    async def add_candle(self, candle: CandleStick):
+    def add_candle(self, candle: CandleStick):
         """
         Последняя свеча объекст класса CandleStick
         добавляется в конец исторических данных

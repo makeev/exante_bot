@@ -127,8 +127,7 @@ class Tester:
             fig = historical_data.get_plotly_figure()
             open_deal = None
 
-            for candle_data in historical_data.get_list():
-                candle = CandleStick(**candle_data)
+            for candle in historical_data.get_list():
                 price = candle.close
                 dt = candle.formatted_date
 

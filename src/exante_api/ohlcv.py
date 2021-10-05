@@ -4,6 +4,8 @@ from collections import OrderedDict
 
 import plotly.graph_objects as go
 
+from bots.base import CandleStick
+
 
 class HistoricalData:
     time_interval = None
@@ -100,10 +102,14 @@ class HistoricalData:
         return fig
 
     def get_list(self):
-        return [{
+        return [CandleStick(**{
             "timestamp": ts,
             "open": row['open'],
             "high": row['high'],
             "low": row['low'],
             "close": row['close']
-        } for ts, row in self.ohlc_data.items()]
+        }) for ts, row in self.ohlc_data.items()]
+
+    def get_last_candle(self):
+        # возвращаем последнюю сформированную свечу
+        return self.get_list()[-2]

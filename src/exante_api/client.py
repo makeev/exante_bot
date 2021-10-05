@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import urllib.parse
 from json import JSONDecodeError
 
@@ -113,7 +114,7 @@ class ExanteApi:
             except ClientConnectorError as e:
                 cprint(e, "red")
             except Exception as e:
-                cprint(e, "red")
+                logging.exception('on event error:')
 
             await asyncio.sleep(delay)
             delay = min(max_delay, delay * 2)  # exponential delay
@@ -200,7 +201,8 @@ class ExanteApi:
         :return: response object
         """
         # получаем данные по открытой позиции
-        account_summary = await self.get_summary(account_id, 'EUR')
+        r = await self.get_summary(account_id, 'EUR')
+        account_summary = await r.json()
         position = None
         for pos in account_summary.get('positions', []):
             if pos['symbolId'] == symbol:

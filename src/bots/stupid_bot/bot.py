@@ -45,9 +45,10 @@ class StupidBot(BaseBot):
         #     # короткая тень должна быть короткой
         #     return
 
-        if last_candle.body_size < 20:
-            # слишком маленькая свеча
-            return
+        # @TODO временно отключаем, чтобы получить больше сделок
+        # if last_candle.body_size < 20:
+        #     # слишком маленькая свеча
+        #     return
 
         # определяем тренд по SMA закрытия
         close_array = [float(c.close) for c in self.historical_ohlcv]
