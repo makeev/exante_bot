@@ -2,3 +2,4 @@ aiohttp
 plotly
 TA-Lib
 numpy
+termcolor
