@@ -1,0 +1,139 @@
+---
+- hosts: "{{ host }}"
+  become: yes
+
+  vars:
+    venv_dir: /home/trader/exante_bot/.env
+    src_dir: /home/trader/exante_bot/src
+    home_dir: /home/trader/exante_bot
+    git_branch: main
+    git_repo: git@github.com:makeev/exante_bot.git
+    deploy_user: trader
+    python_version: 3.9.1
+
+  tasks:
+
+#  - name: Set timezone
+#    command: timedatectl set-timezone Europe/Moscow
+#    when: clean_install == "1"
+#
+#  - name: preinstall packages
+#    apt:
+#      name: ['python-passlib', 'aptitude']
+#      update_cache: yes
+#      state: present
+#    when: clean_install == "1"
+##
+#  - name: updates a server
+#    apt: update_cache=yes
+#    when: clean_install == "1"
+##
+#  - name: upgrade a server
+#    apt: upgrade=yes
+#    when: clean_install == "1"
+##
+#  - name: Make sure we have a 'wheel' group
+#    group:
+#      name: wheel
+#      state: present
+#    when: clean_install == "1"
+##
+#  - name: Allow 'wheel' group to have passwordless sudo
+#    lineinfile:
+#      dest: /etc/sudoers
+#      state: present
+#      regexp: '^%wheel'
+#      line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+#    when: clean_install == "1"
+#
+#  - name: Add sudoers users to wheel group
+#    user: name={{deploy_user}} groups=wheel append=yes state=present createhome=yes
+#    when: clean_install == "1"
+#
+#  - name: install packages for python
+#    apt:
+#      name: ['build-essential', 'checkinstall', 'libreadline-gplv2-dev', 'libncursesw5-dev',
+#             'libssl-dev', 'libsqlite3-dev', 'tk-dev', 'libgdbm-dev', 'libc6-dev', 'libbz2-dev',
+#             'zlib1g-dev', 'openssl', 'libffi-dev', 'python3-dev', 'python3-setuptools', 'wget', 'liblzma-dev']
+#      update_cache: yes
+#      state: present
+#    when: clean_install == "1"
+#
+#  - name: Add an Apt signing key, uses whichever key is at the URL
+#    apt_key:
+#      url: https://dl.yarnpkg.com/debian/pubkey.gpg
+#      state: present
+#
+#  - name: mkdir for app
+#    file: path=/tmp/PythonDir state=directory
+#    become: yes
+#    become_user: root
+#    when: clean_install == "1"
+#
+#  - name: download sources of python.
+#    get_url: url=https://www.python.org/ftp/python/{{python_version}}/Python-{{python_version}}.tar.xz dest=/tmp/PythonDir
+#    become: yes
+#    become_user: root
+#    when: clean_install == "1"
+#
+#  - name: unarchive python
+#    command: tar xvf Python-{{python_version}}.tar.xz chdir="/tmp/PythonDir"
+#    become: yes
+#    become_user: root
+#    when: clean_install == "1"
+#
+#  - name: Install python
+#    command: "{{ item }} chdir=/tmp/PythonDir/Python-{{python_version}}"
+#    with_items:
+#      - ./configure
+#      - make install
+#    become: yes
+#    become_user: root
+#    when: clean_install == "1"
+#
+#  - name: install packages
+#    apt:
+#      name: ['git', 'mc', 'htop', 'vim', 'virtualenv', 'python3-pip',
+#             'python3-dev', 'supervisor', 'libjpeg8', 'libjpeg62-dev', 'libfreetype6',
+#             'libfreetype6-dev', 'redis-server', 'rdiff-backup', 'python3-psycopg2',
+#             'python3-psycopg2', 'libpq-dev', 'python3-passlib', 'acl']
+#      update_cache: yes
+#      state: present
+#    when: clean_install == "1"
+
+  - name: Clone git repository
+    git: >
+      dest={{home_dir}}
+      repo={{git_repo}}
+      version={{git_branch}}
+      update=yes
+      accept_hostkey=yes
+      force=yes
+    become: yes
+    become_user: "{{deploy_user}}"
+
+  - name: Manually create the initial virtualenv
+    command: virtualenv --python=/usr/local/bin/python3 {{ venv_dir }} creates={{venv_dir}}/bin/activate
+    when: clean_install == "1"
+
+#  - name: Pip upgrade
+#    command: "{{item}}"
+#    with_items:
+#     - curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+#     - "/usr/local/bin/python3 get-pip.py --force-reinstall"
+#    when: clean_install == "1"
+#
+#  - name: Install the packages specified in requirements.txt
+#    pip: requirements={{src_dir}}/requirements.txt virtualenv={{ venv_dir }}
+
+  - name: copy supervisor
+    template: src=conf/supervisorctl.conf dest=/etc/supervisor/conf.d/server.conf owner=root mode=0644
+
+  - name: start supervisor
+    service: name=supervisor state=started
+
+  - name: reload supervisor config
+    shell: supervisorctl reload
+
+  - name: restart all supervisor programms
+    shell: supervisorctl restart all

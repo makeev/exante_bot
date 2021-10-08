@@ -1,0 +1,2 @@
+[trader]
+52.57.159.9 ansible_ssh_user=ubuntu ansible_become=true
