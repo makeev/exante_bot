@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from decimal import Decimal
 
 from bots.stupid_bot import StupidBot
@@ -14,6 +15,13 @@ account_id = 'PFC1032.006'
 demo = True
 symbol = 'BTC.USD'
 time_interval = 300  # 5 min
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+    datefmt="%d/%b/%Y %H:%M:%S",
+    stream=sys.stdout)
+logging.info("logging test")
 
 
 class Processor:
