@@ -9,9 +9,11 @@ from exante_api import ExanteApi, Event, HistoricalData
 from exante_api.client import TooManyRequests, PositionAlreadyClosed, PositionNotFound
 from helpers import get_mid_price, send_admin_message
 
-application_id = 'e2b62931-4cf2-4b6f-a319-b94f1a6341f5'
-access_key = 'jf5ODSu3jZ8DQXhxdlTN'
-account_id = 'PFC1032.006'
+import settings
+
+application_id = settings.APPLICATION_ID
+access_key = settings.ACCESS_KEY
+account_id = settings.ACCOUNT_ID
 demo = True
 symbol = 'BTC.USD'
 time_interval = 300  # 5 min
