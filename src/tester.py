@@ -114,9 +114,9 @@ class Tester:
             }
             bot = StupidBot(
                 money_manager=SimpleMoneyManager(
-                    order_amount=0.3,
+                    order_amount=0.5,
                     diff=Decimal(100),
-                    stop_loss_factor=1,
+                    stop_loss_factor=1.2,
                     take_profit_factor=6,
                     trailing_stop=False
                 ),

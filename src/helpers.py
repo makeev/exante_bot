@@ -23,3 +23,11 @@ def get_trend_for(data: list) -> int:
 
 def get_mid_price(bid, ask):
     return Decimal(ask) + (Decimal(bid) - Decimal(ask)) / 2
+
+
+async def send_admin_message(message):
+    import aiogram
+    import settings
+    b = aiogram.Bot(token=settings.TELEGRAM_TOKEN)
+    prefix = "#exantebot "
+    await b.send_message(settings.TELEGRAM_CHAT_ID, prefix+message)

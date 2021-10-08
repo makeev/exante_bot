@@ -3,3 +3,4 @@ plotly
 TA-Lib
 numpy
 termcolor
+aiogram
