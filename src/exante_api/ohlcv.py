@@ -2,7 +2,10 @@ from datetime import datetime
 from decimal import Decimal, getcontext
 from collections import OrderedDict
 
+import numpy as np
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from talib._ta_lib import RSI, SMA
 
 from bots.base import CandleStick
 
@@ -90,7 +93,16 @@ class HistoricalData:
             low.append(row['low'])
             close.append(row['close'])
 
-        fig = go.Figure(data=[
+        fig = make_subplots(
+            rows=2,
+            cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.2,
+            # row_width=[0.5, 0.5]
+        )
+
+        # candles
+        fig.add_trace(
             go.Candlestick(x=dates,
                            open=open,
                            high=high,
@@ -98,7 +110,34 @@ class HistoricalData:
                            close=close,
                            name="candles"
                            ),
-        ])
+            row=1, col=1
+        )
+
+        # SMA
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=self.get_sma(),
+            name="SMA",
+            yaxis="y1",
+            line=dict(color='blue', width=2),
+            legendgroup="sma",
+        ), row=1, col=1)
+
+        # RSI
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=self.get_rsi(),
+            name="RSI",
+            yaxis="y3",
+            line=dict(color='purple', width=2),
+            legendgroup="rsi",
+        ), row=2, col=1)
+        fig.add_hrect(y0=30, y1=70,
+                      fillcolor="purple",
+                      opacity=0.2,
+                      line_width=0, row=2, col=1)
+
+
         return fig
 
     def get_list(self):
@@ -113,3 +152,11 @@ class HistoricalData:
     def get_last_candle(self):
         # возвращаем последнюю сформированную свечу
         return self.get_list()[-2]
+
+    def get_rsi(self, length=14):
+        close_array = [float(c['close']) for c in self.ohlc_data.values()]
+        return RSI(np.array(close_array), length)
+
+    def get_sma(self, length=100):
+        close_array = [float(c['close']) for c in self.ohlc_data.values()]
+        return SMA(np.array(close_array), length)

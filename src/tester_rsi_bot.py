@@ -3,15 +3,24 @@ import json
 from decimal import Decimal
 
 import settings
-from bots.stupid_bot import StupidBot
+from bots.rsi_bot.bot import RsiBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, HistoricalData
 
-account = settings.ACCOUNTS['demo_1']
-
-api = ExanteApi(**account)
-symbol = 'BTC.USD'
+api = ExanteApi(**settings.ACCOUNTS['demo_2'])
+symbol = 'EUR/NZD.E.FX'
 time_interval = 300
+money_manager = SimpleMoneyManager(
+    order_amount=10000,
+    diff=Decimal(0.001),
+    stop_loss_factor=2,
+    take_profit_factor=6,
+    trailing_stop=False
+)
+bot_params = {
+    'upper_band': 70,
+    'lower_band': 30,
+}
 
 
 class Tester:
@@ -91,32 +100,23 @@ class Tester:
             # r = await api.get_ohlcv(symbol, time_interval, size=5000)
             # data = await r.json()
             #
-            # with open('history_btc_usd.json', 'w+') as output_file:
+            # with open('history_eur_nzd.json', 'w+') as output_file:
             #     json.dump(data, output_file)
 
-            with open("history_btc_usd.json", 'r') as json_file:
+            with open("history_eur_nzd.json", 'r') as json_file:
                 data = json.load(json_file)
 
-            # data = data[:2000]
+            # data = data[:101]
             historical_data = HistoricalData(time_interval, data)
+            # fig = historical_data.get_plotly_figure()
+            # fig.show()
+            # exit()
 
             # инициируем бота которого будем тестировать
-            params = {
-                'sma_size': 100,
-                'trend_len': 5,
-                'pinbar_size': 1.5,
-                'super_pinbar_size': None
-            }
-            bot = StupidBot(
-                money_manager=SimpleMoneyManager(
-                    order_amount=0.45,
-                    diff=Decimal(100),
-                    stop_loss_factor=1.2,
-                    take_profit_factor=6,
-                    trailing_stop=False
-                ),
+            bot = RsiBot(
+                money_manager=money_manager,
                 historical_ohlcv=[],
-                **params
+                **bot_params
             )
 
             fig = historical_data.get_plotly_figure()

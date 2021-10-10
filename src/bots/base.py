@@ -190,9 +190,11 @@ class Deal:
         self.status = 'closed'
 
         if self.side == Signal.BUY.value:
-            return price - self.price
-        # sell
-        return self.price - price
+            profit = price - self.price
+        else:
+            profit = self.price - price
+
+        return Decimal(profit) * Decimal(self.amount)
 
     def __str__(self):
         return str(self.side)

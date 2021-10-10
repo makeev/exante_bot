@@ -31,3 +31,14 @@ async def send_admin_message(message):
     b = aiogram.Bot(token=settings.TELEGRAM_TOKEN)
     prefix = "#exantebot "
     await b.send_message(settings.TELEGRAM_CHAT_ID, prefix+message)
+
+
+def max_diff(a):
+    vmin = a[0]
+    dmax = 0
+    for i in range(len(a)):
+        if (a[i] < vmin):
+            vmin = a[i]
+        elif (a[i] - vmin > dmax):
+            dmax = a[i] - vmin
+    return dmax
