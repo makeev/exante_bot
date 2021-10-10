@@ -84,7 +84,7 @@ class Processor:
 
 async def main():
     while True:
-        api = ExanteApi(**settings.ACCOUNTS['demo_1'])
+        api = ExanteApi(**settings.ACCOUNTS['demo_2'])
 
         try:
             # берем исторические данные, чтобы нарисовать линию SMA
