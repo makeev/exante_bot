@@ -55,18 +55,18 @@ class RsiBot(BaseBot):
             elif last_rsi <= lower_band:
                 # перепроданность
                 self.oversold = True
-        else:
-            # мы уже в зоне перекупленности/перепроданности
-            # ждем когда индикатор вернется обратно, чтобы открыть сделку
-            current_rsi = rsi[-1]
-            if self.overbought:
-                if current_rsi < upper_band:
-                    self.overbought = False
-                    order_type = Signal.SELL
-            elif self.oversold:
-                if current_rsi > lower_band:
-                    self.oversold = False
-                    order_type = Signal.BUY
+
+        # мы уже в зоне перекупленности/перепроданности
+        # ждем когда индикатор вернется обратно, чтобы открыть сделку
+        current_rsi = rsi[-1]
+        if self.overbought:
+            if current_rsi < upper_band:
+                self.overbought = False
+                order_type = Signal.SELL
+        elif self.oversold:
+            if current_rsi > lower_band:
+                self.oversold = False
+                order_type = Signal.BUY
 
         if order_type:
             return Result(signal=order_type, price=price)
