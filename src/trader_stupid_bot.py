@@ -11,10 +11,6 @@ from helpers import get_mid_price, send_admin_message
 
 import settings
 
-application_id = settings.APPLICATION_ID
-access_key = settings.ACCESS_KEY
-account_id = settings.ACCOUNT_ID
-demo = True
 symbol = 'BTC.USD'
 time_interval = 300  # 5 min
 
@@ -50,7 +46,7 @@ class Processor:
                 if deal:
                     # закрываем позицию, если открыта
                     try:
-                        await self.api.close_position(account_id, symbol)
+                        await self.api.close_position(symbol)
                     except (PositionAlreadyClosed, PositionNotFound):
                         # нечего закрывать, все ок
                         pass
@@ -60,7 +56,6 @@ class Processor:
 
                     # открываем новую позицию
                     await self.api.open_position(
-                        account_id=account_id,
                         symbol=symbol,
                         side=deal.side,
                         quantity=deal.amount,
@@ -78,7 +73,7 @@ class Processor:
 
 async def main():
     while True:
-        api = ExanteApi(application_id=application_id, access_key=access_key, demo=demo)
+        api = ExanteApi(**settings.ACCOUNTS['demo_1'])
 
         try:
             # берем исторические данные, чтобы нарисовать линию SMA

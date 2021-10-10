@@ -22,11 +22,14 @@ class PositionAlreadyClosed(Exception):
 
 
 class ExanteApi:
-    def __init__(self, application_id: str, access_key: str, demo: bool = False):
+    def __init__(self, application_id: str, access_key: str, demo: bool, account_id: str, currency: str):
         self.demo = demo
-        self.endpoint_url = 'https://api-demo.exante.eu' if demo else 'https://api-live.exante.eu'
         self.application_id = application_id
         self.access_key = access_key
+        self.account_id = account_id
+        self.currency = currency.upper()
+
+        self.endpoint_url = 'https://api-demo.exante.eu' if demo else 'https://api-live.exante.eu'
         self._client = None
 
     def get_auth(self):
@@ -160,8 +163,17 @@ class ExanteApi:
         r = await self.client.get(url)
         return await self.process_response(r)
 
-    async def get_summary(self, account_id, currency):
-        currency = currency.upper()
+    async def get_summary(self, currency=None, account_id=None):
+        if currency is None:
+            currency = self.currency
+        else:
+            currency = currency.upper()
+
+        if account_id is None:
+            account_id = self.account_id
+        else:
+            account_id = account_id.upper()
+
         url = self.get_url('summary', params=[account_id, currency])
         r = await self.client.get(url)
         return await self.process_response(r)
@@ -181,7 +193,12 @@ class ExanteApi:
         r = await self.client.post(url, json=data)
         return await self.process_response(r)
 
-    async def open_position(self, account_id, symbol, side, quantity, take_profit, stop_loss):
+    async def open_position(self,symbol, side, quantity, take_profit, stop_loss, account_id=None):
+        if account_id is None:
+            account_id = self.account_id
+        else:
+            account_id = account_id.upper()
+
         return await self.place_order({
             "accountId": account_id,
             "symbolId": symbol,
@@ -193,13 +210,18 @@ class ExanteApi:
             "stopLoss": str(stop_loss),
         })
 
-    async def close_position(self, account_id, symbol):
+    async def close_position(self, symbol, account_id=None):
         """
         raise PositionNotFound and PositionAlreadyClosed
         :param account_id:
         :param symbol:
         :return: response object
         """
+        if account_id is None:
+            account_id = self.account_id
+        else:
+            account_id = account_id.upper()
+
         # получаем данные по открытой позиции
         r = await self.get_summary(account_id, 'EUR')
         account_summary = await r.json()

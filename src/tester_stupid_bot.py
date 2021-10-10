@@ -1,21 +1,16 @@
 import asyncio
 import json
-from datetime import datetime
 from decimal import Decimal
 
-import plotly.graph_objects as go
-
-from bots.base import CandleStick
+import settings
 from bots.stupid_bot import StupidBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
-from exante_api import ExanteApi, Event, HistoricalData
+from exante_api import ExanteApi, HistoricalData
 
-application_id = 'e2b62931-4cf2-4b6f-a319-b94f1a6341f5'
-access_key = 'jf5ODSu3jZ8DQXhxdlTN'
-demo = True
-api = ExanteApi(application_id=application_id, access_key=access_key, demo=demo)
-symbol = 'EUR/USD.E.FX'
-# symbol = 'BTC.USD'
+account = settings.ACCOUNTS['demo_1']
+
+api = ExanteApi(**account)
+symbol = 'BTC.USD'
 time_interval = 300
 
 
@@ -99,7 +94,7 @@ class Tester:
             # with open('history_eur_usd.json', 'w+') as output_file:
             #     json.dump(data, output_file)
 
-            with open("history.json", 'r') as json_file:
+            with open("history_eur_usd.json", 'r') as json_file:
                 data = json.load(json_file)
 
             # data = data[:2000]
@@ -114,7 +109,7 @@ class Tester:
             }
             bot = StupidBot(
                 money_manager=SimpleMoneyManager(
-                    order_amount=0.5,
+                    order_amount=0.45,
                     diff=Decimal(100),
                     stop_loss_factor=1.2,
                     take_profit_factor=6,
