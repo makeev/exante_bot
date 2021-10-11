@@ -49,7 +49,7 @@ class Processor:
                     try:
                         position = await self.api.get_position(symbol)
                         if position:
-                            position_side = 'sell' if position['quantity'] < 0 else 'buy'
+                            position_side = 'sell' if float(position['quantity']) < 0 else 'buy'
                             # закрываем позицию только если она открыта в противоположную сторону
                             if position_side != deal.side:
                                 # закрываем, надо открыть в другую сторону
