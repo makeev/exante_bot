@@ -57,7 +57,7 @@ class Processor:
                                 position = None
                     except (PositionAlreadyClosed, PositionNotFound):
                         # нечего закрывать, все ок
-                        pass
+                        position = None
                     else:
                         # даем время позиции закрыться
                         await asyncio.sleep(0.5)
