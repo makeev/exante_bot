@@ -54,13 +54,11 @@ class Processor:
                             if position_side != deal.side:
                                 # закрываем, надо открыть в другую сторону
                                 await self.api.close_position(symbol, position=position)
+                                await asyncio.sleep(0.5)
                                 position = None
                     except (PositionAlreadyClosed, PositionNotFound):
                         # нечего закрывать, все ок
                         position = None
-                    else:
-                        # даем время позиции закрыться
-                        await asyncio.sleep(0.5)
 
                     # открываем новую позицию
                     if not position:
