@@ -45,8 +45,16 @@ class Processor:
                 deal = await self.bot.check_price(price)
                 if deal:
                     # закрываем позицию, если открыта
+                    position = None
                     try:
-                        await self.api.close_position(symbol)
+                        position = await self.api.get_position(symbol)
+                        if position:
+                            position_side = 'sell' if position['quantity'] < 0 else 'buy'
+                            # закрываем позицию только если она открыта в противоположную сторону
+                            if position_side != deal.side:
+                                # закрываем, надо открыть в другую сторону
+                                await self.api.close_position(symbol, position=position)
+                                position = None
                     except (PositionAlreadyClosed, PositionNotFound):
                         # нечего закрывать, все ок
                         pass
@@ -55,13 +63,14 @@ class Processor:
                         await asyncio.sleep(0.5)
 
                     # открываем новую позицию
-                    await self.api.open_position(
-                        symbol=symbol,
-                        side=deal.side,
-                        quantity=deal.amount,
-                        take_profit=deal.take_profit,
-                        stop_loss=deal.stop_loss,
-                    )
+                    if not position:
+                        await self.api.open_position(
+                            symbol=symbol,
+                            side=deal.side,
+                            quantity=deal.amount,
+                            take_profit=deal.take_profit,
+                            stop_loss=deal.stop_loss,
+                        )
 
                     await send_admin_message("new deal {side}: \namount={amount} \ntp={take_profit} \nsl={stop_loss}".format(
                         side=deal.side,
