@@ -14,7 +14,7 @@ import settings
 symbol = 'EUR/NZD.E.FX'
 time_interval = 300
 money_manager = SimpleMoneyManager(
-    order_amount=10000,
+    order_amount=100000,
     diff=Decimal(0.001),
     stop_loss_factor=2,
     take_profit_factor=6,
@@ -56,8 +56,14 @@ class Processor:
                 deal = await self.bot.check_price(price)
                 if deal:
                     # закрываем позицию, если открыта
+                    # закрываем позицию только если она открыта в противоположную сторону
                     try:
-                        await self.api.close_position(symbol)
+                        position = await self.api.get_position(symbol)
+                        if position:
+                            position_side = 'sell' if position['quantity'] < 0 else 'buy'
+                            if position_side != deal.side:
+                                # закрываем, надо открыть в другую сторону
+                                await self.api.close_position(symbol, position=position)
                     except (PositionAlreadyClosed, PositionNotFound):
                         # нечего закрывать, все ок
                         pass

@@ -188,6 +188,12 @@ class ExanteApi:
         r = await self.client.get(url)
         return await self.process_response(r)
 
+    async def cancel_order(self, order_id):
+        url = self.get_url('orders', type='trade', params=[order_id])
+        data = {"action": "cancel"}
+        r = await self.client.post(url, json=data)
+        return await self.process_response(r)
+
     async def place_order(self, data):
         url = self.get_url('orders', type='trade')
         r = await self.client.post(url, json=data)
@@ -210,12 +216,35 @@ class ExanteApi:
             "stopLoss": str(stop_loss),
         })
 
-    async def close_position(self, symbol, account_id=None):
+    async def get_position(self, symbol, account_id=None):
+        r = await self.get_summary(account_id=account_id, currency='EUR')
+        account_summary = await r.json()
+        position = None
+
+        for pos in account_summary.get('positions', []):
+            if pos['symbolId'] == symbol:
+                position = pos
+                break
+
+        return position
+
+    async def cancel_active_orders(self, symbol):
+        r = await self.get_active_orders()
+        orders = await r.json()
+
+        result = []
+        for o in orders:
+            if o['orderParameters']['symbolId'] != symbol:
+                continue
+
+            r = await self.cancel_order(o['orderId'])
+            result.append(r)
+
+        return result
+
+    async def close_position(self, symbol, account_id=None, position=None):
         """
         raise PositionNotFound and PositionAlreadyClosed
-        :param account_id:
-        :param symbol:
-        :return: response object
         """
         if account_id is None:
             account_id = self.account_id
@@ -223,13 +252,8 @@ class ExanteApi:
             account_id = account_id.upper()
 
         # получаем данные по открытой позиции
-        r = await self.get_summary(account_id=account_id, currency='EUR')
-        account_summary = await r.json()
-        position = None
-        for pos in account_summary.get('positions', []):
-            if pos['symbolId'] == symbol:
-                position = pos
-                break
+        if not position:
+            position = await self.get_position(symbol=symbol, account_id=account_id)
 
         if not position:
             raise PositionNotFound()
@@ -243,6 +267,9 @@ class ExanteApi:
             side = 'buy'
 
         quantity = str(abs(float(position['quantity'])))
+
+        # отменяем все открытые ордера
+        await self.cancel_active_orders(symbol=symbol)
 
         # закрываем позицию по рынку
         return await self.place_order({
