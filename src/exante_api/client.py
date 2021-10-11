@@ -223,7 +223,7 @@ class ExanteApi:
             account_id = account_id.upper()
 
         # получаем данные по открытой позиции
-        r = await self.get_summary(account_id, 'EUR')
+        r = await self.get_summary(account_id=account_id, currency='EUR')
         account_summary = await r.json()
         position = None
         for pos in account_summary.get('positions', []):
