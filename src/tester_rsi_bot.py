@@ -14,7 +14,7 @@ money_manager = SimpleMoneyManager(
     order_amount=100000,
     diff=Decimal(0.001),
     stop_loss_factor=2,
-    take_profit_factor=6,
+    take_profit_factor=4,
     trailing_stop=False
 )
 bot_params = {
@@ -162,7 +162,7 @@ class Tester:
                         self._add_deal_to_chart(open_deal, dt)
 
             fig.update_layout(annotations=self.annotations)
-            fig.show()
+            # fig.show()
             print("""
             take_profit_deals: {take_profit_deals}
             stop_loss_deals: {stop_loss_deals}
