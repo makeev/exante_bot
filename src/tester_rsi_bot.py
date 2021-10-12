@@ -14,7 +14,7 @@ money_manager = SimpleMoneyManager(
     order_amount=100000,
     diff=Decimal(0.001),
     stop_loss_factor=2,
-    take_profit_factor=4,
+    take_profit_factor=6,
     trailing_stop=False
 )
 bot_params = {
