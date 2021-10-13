@@ -226,7 +226,8 @@ class ExanteApi:
                 position = pos
                 break
 
-        return position
+        if position and float(position['quantity']) != 0:
+            return position
 
     async def cancel_active_orders(self, symbol):
         r = await self.get_active_orders()
