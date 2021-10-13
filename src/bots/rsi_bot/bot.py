@@ -60,11 +60,11 @@ class RsiBot(BaseBot):
         # ждем когда индикатор вернется обратно, чтобы открыть сделку
         current_rsi = rsi[-1]
         if self.overbought:
-            if current_rsi < upper_band:
+            if current_rsi <= upper_band:
                 self.overbought = False
                 order_type = Signal.SELL
         elif self.oversold:
-            if current_rsi > lower_band:
+            if current_rsi >= lower_band:
                 self.oversold = False
                 order_type = Signal.BUY
 
