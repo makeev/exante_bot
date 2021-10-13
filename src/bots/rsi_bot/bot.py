@@ -58,7 +58,7 @@ class RsiBot(BaseBot):
 
         # мы уже в зоне перекупленности/перепроданности
         # ждем когда индикатор вернется обратно, чтобы открыть сделку
-        current_rsi = rsi[-1]
+        current_rsi = rsi[-2]
         if self.overbought:
             if current_rsi <= upper_band:
                 self.overbought = False
