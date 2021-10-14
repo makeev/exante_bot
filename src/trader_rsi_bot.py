@@ -12,6 +12,7 @@ from helpers import get_mid_price, send_admin_message
 import settings
 
 symbol = 'EUR/NZD.E.FX'
+account_name = 'demo_1'
 time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=100000,
@@ -102,7 +103,7 @@ class Processor:
 
 async def main():
     while True:
-        api = ExanteApi(**settings.ACCOUNTS['demo_2'])
+        api = ExanteApi(**settings.ACCOUNTS[account_name])
 
         try:
             # берем исторические данные, чтобы нарисовать линию SMA

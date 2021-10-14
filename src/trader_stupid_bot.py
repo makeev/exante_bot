@@ -98,7 +98,7 @@ async def main():
             }
             bot = StupidBot(
                 money_manager=SimpleMoneyManager(
-                    order_amount=0.45,
+                    order_amount=0.35,
                     diff=Decimal(100),
                     stop_loss_factor=1.2,
                     take_profit_factor=6,
