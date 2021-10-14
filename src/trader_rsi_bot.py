@@ -93,7 +93,7 @@ class Processor:
             # проверяем можно ли двинуть в безубыток
             try:
                 position = await self.api.get_position(symbol)
-                if position and position['convertedPnl'] >= breakeven_profit:
+                if position and float(position['convertedPnl']) >= breakeven_profit:
                     await self.api.move_to_breakeven(symbol)
             except PositionOrdersNotFound:
                 await send_admin_message('PositionOrdersNotFound: %s' % position)
