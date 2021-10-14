@@ -21,6 +21,10 @@ class PositionAlreadyClosed(Exception):
     pass
 
 
+class PositionOrdersNotFound(Exception):
+    pass
+
+
 class ExanteApi:
     def __init__(self, application_id: str, access_key: str, demo: bool, account_id: str, currency: str):
         self.demo = demo
@@ -183,9 +187,9 @@ class ExanteApi:
         r = await self.client.get(url)
         return await self.process_response(r)
 
-    async def get_orders(self):
+    async def get_orders(self, **params):
         url = self.get_url('orders', type='trade')
-        r = await self.client.get(url)
+        r = await self.client.get(url, params=params)
         return await self.process_response(r)
 
     async def cancel_order(self, order_id):
@@ -194,10 +198,51 @@ class ExanteApi:
         r = await self.client.post(url, json=data)
         return await self.process_response(r)
 
+    async def update_order(self, order_id, data):
+        url = self.get_url('orders', type='trade', params=[order_id])
+        data = {"action": "replace", "parameters": data}
+        r = await self.client.post(url, json=data)
+        return await self.process_response(r)
+
     async def place_order(self, data):
         url = self.get_url('orders', type='trade')
         r = await self.client.post(url, json=data)
         return await self.process_response(r)
+
+    async def move_to_breakeven(self, symbol):
+        r = await self.get_orders(limit=20)
+        orders = await r.json()
+
+        sl_order = None
+        tp_order = None
+        initial_order = None
+        for o in orders:
+            if o['orderParameters']['symbolId'] != symbol:
+                continue
+
+            if initial_order and sl_order and tp_order:
+                break
+
+            if o['orderParameters'].get('stopPrice') and o['orderState']['status'] == 'working':
+                sl_order = o
+            elif o['orderParameters'].get('limitPrice') and o['orderState']['status'] == 'working':
+                tp_order = o
+            elif o['orderParameters'].get('orderType') == 'market':
+                initial_order = o
+
+        if not initial_order or not sl_order or not tp_order:
+            raise PositionOrdersNotFound()
+
+        new_stop_loss = initial_order['orderState']['fills'][0]['price']
+        r = await self.update_order(
+            sl_order['orderId'],
+            {
+                "stopPrice": new_stop_loss,
+                "quantity": sl_order['orderParameters']['quantity']
+            }
+        )
+        assert r.status == 202
+        return r
 
     async def open_position(self,symbol, side, quantity, take_profit, stop_loss, account_id=None):
         if account_id is None:

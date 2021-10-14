@@ -6,7 +6,7 @@ from decimal import Decimal
 from bots.rsi_bot.bot import RsiBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, Event, HistoricalData
-from exante_api.client import TooManyRequests, PositionAlreadyClosed, PositionNotFound
+from exante_api.client import TooManyRequests, PositionAlreadyClosed, PositionNotFound, PositionOrdersNotFound
 from helpers import get_mid_price, send_admin_message
 
 import settings
@@ -16,14 +16,14 @@ time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=100000,
     diff=Decimal(0.001),
-    stop_loss_factor=1.5,
-    take_profit_factor=6,
-    trailing_stop=False
+    stop_loss_factor=0.5,
+    take_profit_factor=5,
 )
 bot_params = {
     'upper_band': 70,
     'lower_band': 30,
 }
+breakeven_profit = 100
 
 logging.basicConfig(
     level=logging.INFO,
@@ -88,6 +88,16 @@ class Processor:
                         take_profit=deal.take_profit,
                         stop_loss=deal.stop_loss,
                     ))
+
+            # проверяем можно ли двинуть в безубыток
+            try:
+                position = await self.api.get_position(symbol)
+                if position and position['convertedPnl'] >= breakeven_profit:
+                    await self.api.move_to_breakeven(symbol)
+            except PositionOrdersNotFound:
+                await send_admin_message('PositionOrdersNotFound: %s' % position)
+            except AssertionError as e:
+                await send_admin_message('AssertionError: %s' % str(e))
 
 
 async def main():
