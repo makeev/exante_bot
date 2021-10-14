@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+import time
 from decimal import Decimal
 
 from bots.rsi_bot.bot import RsiBot
@@ -39,6 +40,7 @@ class Processor:
         self.historical_data = historical_data
         self.bot = bot
         self.api = api
+        self.last_check_ts = time.time()
 
     async def on_event(self, data):
         e = Event(data)
@@ -91,14 +93,17 @@ class Processor:
                     ))
 
             # проверяем можно ли двинуть в безубыток
-            try:
-                position = await self.api.get_position(symbol)
-                if position and float(position['convertedPnl']) >= breakeven_profit:
-                    await self.api.move_to_breakeven(symbol)
-            except PositionOrdersNotFound:
-                await send_admin_message('PositionOrdersNotFound: %s' % position)
-            except AssertionError as e:
-                await send_admin_message('AssertionError: %s' % str(e))
+            time_since_last_check = time.time() - self.last_check_ts
+            if time_since_last_check > 5:  # не чаще раз в 5с
+                self.last_check_ts = time.time()
+                try:
+                    position = await self.api.get_position(symbol)
+                    if position and float(position['convertedPnl']) >= breakeven_profit:
+                        await self.api.move_to_breakeven(symbol)
+                except PositionOrdersNotFound:
+                    await send_admin_message('PositionOrdersNotFound: %s' % position)
+                except AssertionError as e:
+                    await send_admin_message('AssertionError: %s' % str(e))
 
 
 async def main():
