@@ -234,7 +234,7 @@ class ExanteApi:
             raise PositionOrdersNotFound()
 
         new_stop_loss = initial_order['orderState']['fills'][0]['price']
-        if abs(float(new_stop_loss) - float(sl_order['stopPrice'])) > 0.001:
+        if abs(float(new_stop_loss) - float(sl_order['orderParameters']['stopPrice'])) > 0.001:
             r = await self.update_order(
                 sl_order['orderId'],
                 {
