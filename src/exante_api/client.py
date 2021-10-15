@@ -234,15 +234,16 @@ class ExanteApi:
             raise PositionOrdersNotFound()
 
         new_stop_loss = initial_order['orderState']['fills'][0]['price']
-        r = await self.update_order(
-            sl_order['orderId'],
-            {
-                "stopPrice": new_stop_loss,
-                "quantity": sl_order['orderParameters']['quantity']
-            }
-        )
-        assert r.status == 202
-        return r
+        if abs(float(new_stop_loss) - float(sl_order['stopPrice'])) > 0.001:
+            r = await self.update_order(
+                sl_order['orderId'],
+                {
+                    "stopPrice": new_stop_loss,
+                    "quantity": sl_order['orderParameters']['quantity']
+                }
+            )
+            assert r.status == 202
+            return r
 
     async def open_position(self,symbol, side, quantity, take_profit, stop_loss, account_id=None):
         if account_id is None:
