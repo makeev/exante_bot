@@ -98,6 +98,7 @@ class HistoricalData:
             cols=1,
             shared_xaxes=True,
             vertical_spacing=0.2,
+            row_heights=[1000, 150]
             # row_width=[0.5, 0.5]
         )
 
@@ -116,10 +117,26 @@ class HistoricalData:
         # SMA
         fig.add_trace(go.Scatter(
             x=dates,
-            y=self.get_sma(),
+            y=self.get_sma(100),
             name="SMA",
             yaxis="y1",
             line=dict(color='blue', width=2),
+            legendgroup="sma",
+        ), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=self.get_sma(50),
+            name="SMA",
+            yaxis="y1",
+            line=dict(color='red', width=2),
+            legendgroup="sma",
+        ), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=self.get_sma(30),
+            name="SMA",
+            yaxis="y1",
+            line=dict(color='green', width=2),
             legendgroup="sma",
         ), row=1, col=1)
 

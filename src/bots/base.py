@@ -6,9 +6,14 @@ from enum import Enum
 from typing import Literal
 
 
+class CloseOpenedDeal(Exception):
+    pass
+
+
 class Signal(Enum):
     BUY = 'buy'
     SELL = 'sell'
+    CLOSE = 'close'
 
 
 @dataclass

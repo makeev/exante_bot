@@ -3,13 +3,13 @@ from typing import Union, List
 import numpy as np
 from talib import RSI, SMA
 
-from bots.base import Result, BaseBot, Signal, Deal
+from bots.base import Result, BaseBot, Signal, Deal, CloseOpenedDeal
 from helpers import get_trend_for, max_diff
 
 
-class RsiBot(BaseBot):
-    min_candles = 10
-    name = 'rsi_bot'
+class SmaTrendBot(BaseBot):
+    min_candles = 100
+    name = 'sma_trend_bot'
 
     def __init__(self, money_manager, historical_ohlcv: List = None, **params):
         """
@@ -22,51 +22,38 @@ class RsiBot(BaseBot):
         self.money_manager = money_manager
         self.params = params
 
-        self.overbought = False
-        self.oversold = False
-
     async def _test_price(self, price) -> Union[Result, None]:
         if len(self.historical_ohlcv) < self.min_candles:
             # недостаточно свечек для принятия решения
             return
 
-        # конфигурируемые параметры
-        rsi_length = self.params.get('rsi_length', 14)
-        upper_band = self.params.get('upper_band', 75)
-        lower_band = self.params.get('lower_band', 25)
+        trend_len = self.params.get('trend_len', 5)
 
         close_array = [float(c.close) for c in self.historical_ohlcv]
-        rsi = RSI(np.array(close_array), rsi_length)
+        sma_100 = SMA(np.array(close_array), 100)
+        sma_50 = SMA(np.array(close_array), 50)
+        sma_30 = SMA(np.array(close_array), 30)
 
-        # sma = SMA(np.array(close_array))
-        # sma_diff = max_diff(sma[-3:])
+        j = -trend_len - 1
+        had_trend = sma_100[j] > sma_50[j] > sma_30[j] or sma_100[j] < sma_50[j] < sma_30[j]
 
-        # if sma_diff > 0.00009:
-        #     # слишком крутой тренд
-        #     return
+        has_trend = False
+        if had_trend:
+            has_trend = True
+            for i in range(1, trend_len + 1):
+                if not (sma_100[-i] > sma_50[-i] > sma_30[-i] or sma_100[-i] < sma_50[-i] < sma_30[-i]):
+                    has_trend = False
+                    break
 
         order_type = False
-        if not self.overbought and not self.oversold:
-            # смотрим не вышел ли RSI за нужные нам пределы
-            last_rsi = rsi[-2]
-            if last_rsi >= upper_band:
-                # перекупленность
-                self.overbought = True
-            elif last_rsi <= lower_band:
-                # перепроданность
-                self.oversold = True
-
-        # мы уже в зоне перекупленности/перепроданности
-        # ждем когда индикатор вернется обратно, чтобы открыть сделку
-        current_rsi = rsi[-1]
-        if self.overbought:
-            if current_rsi <= upper_band:
-                self.overbought = False
+        if has_trend:
+            if sma_100[-1] > sma_50[-1] > sma_30[-1]:
                 order_type = Signal.SELL
-        elif self.oversold:
-            if current_rsi >= lower_band:
-                self.oversold = False
+            else:
                 order_type = Signal.BUY
+        else:
+            if not (sma_100[-1] > sma_50[-1] > sma_30[-1] or sma_100[-1] < sma_50[-1] < sma_30[-1]):
+                order_type = Signal.CLOSE
 
         if order_type:
             return Result(signal=order_type, price=price)
@@ -96,6 +83,9 @@ class RsiBot(BaseBot):
         result = await self._test_price(price)
 
         if result:
+            if result.signal == Signal.CLOSE:
+                raise CloseOpenedDeal()
+
             return Deal(**{
                 "price": result.price,
                 "amount": self.money_manager.get_order_amount(),  # amount в base_currency сколько купили

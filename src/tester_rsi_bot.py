@@ -97,6 +97,7 @@ class Tester:
 
     async def do(self):
         try:
+            filename = 'history_%s' % symbol.replace('/', '_')
             # r = await api.get_ohlcv(symbol, time_interval, size=5000)
             # data = await r.json()
             #
@@ -106,7 +107,7 @@ class Tester:
             with open("history_eur_nzd.json", 'r') as json_file:
                 data = json.load(json_file)
 
-            # data = data[:101]
+            data = data[:1000]
             historical_data = HistoricalData(time_interval, data)
             # fig = historical_data.get_plotly_figure()
             # fig.show()

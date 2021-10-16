@@ -3,15 +3,26 @@ import json
 from decimal import Decimal
 
 import settings
-from bots.stupid_bot import StupidBot
+from bots.base import CloseOpenedDeal
+from bots.sma_trend_bot.bot import SmaTrendBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, HistoricalData
 
-account = settings.ACCOUNTS['demo_1']
-
-api = ExanteApi(**account)
-symbol = 'BTC.USD'
+api = ExanteApi(**settings.ACCOUNTS['demo_2'])
+symbol = 'EUR/CHF.E.FX'
+# symbol = 'EUR/NZD.E.FX'
+# symbol = 'BABA.NYSE'
 time_interval = 300
+money_manager = SimpleMoneyManager(
+    order_amount=100000,
+    diff=Decimal(0.001),
+    stop_loss_factor=2,
+    take_profit_factor=6,
+    trailing_stop=False
+)
+bot_params = {
+    "trend_len": 5
+}
 
 
 class Tester:
@@ -88,35 +99,28 @@ class Tester:
 
     async def do(self):
         try:
+            filename = 'history_%s' % symbol.replace('/', '_')
+
             # r = await api.get_ohlcv(symbol, time_interval, size=5000)
             # data = await r.json()
             #
-            # with open('history_btc_usd.json', 'w+') as output_file:
+            # with open(filename, 'w+') as output_file:
             #     json.dump(data, output_file)
 
-            with open("history_btc_usd.json", 'r') as json_file:
+            with open(filename, 'r') as json_file:
                 data = json.load(json_file)
 
-            data = data[:1000]
+            data = data[:5000]
             historical_data = HistoricalData(time_interval, data)
+            # fig = historical_data.get_plotly_figure()
+            # fig.show()
+            # exit()
 
             # инициируем бота которого будем тестировать
-            params = {
-                'sma_size': 100,
-                'trend_len': 5,
-                'pinbar_size': 1.5,
-                'super_pinbar_size': None
-            }
-            bot = StupidBot(
-                money_manager=SimpleMoneyManager(
-                    order_amount=0.45,
-                    diff=Decimal(100),
-                    stop_loss_factor=1.2,
-                    take_profit_factor=6,
-                    trailing_stop=False
-                ),
+            bot = SmaTrendBot(
+                money_manager=money_manager,
                 historical_ohlcv=[],
-                **params
+                **bot_params
             )
 
             fig = historical_data.get_plotly_figure()
@@ -138,28 +142,36 @@ class Tester:
                 bot.add_candle(candle)
 
                 # проверяем есть ли сигнал на сделку
-                possible_deal = await bot.check_price(price)
-                # есть сделка
-                if possible_deal:
-                    # если уже есть открытая сделка
-                    if open_deal:
-                        # если новая сделка в другую сторону
-                        if open_deal.side != possible_deal.side:
-                            # то закрываем старую сделку и открываем новую
-                            profit = open_deal.close(price)
-                            if profit is not None:
-                                # закрываем сделку и наносим на график
-                                self._handle_deal_profit(profit, dt, price)
+                try:
+                    possible_deal = await bot.check_price(price)
+                    # есть сделка
+                    if possible_deal:
+                        # если уже есть открытая сделка
+                        if open_deal:
+                            # если новая сделка в другую сторону
+                            if open_deal.side != possible_deal.side:
+                                # то закрываем старую сделку и открываем новую
+                                profit = open_deal.close(price)
+                                if profit is not None:
+                                    # закрываем сделку и наносим на график
+                                    self._handle_deal_profit(profit, dt, price)
 
+                                open_deal = possible_deal
+                                self._add_deal_to_chart(open_deal, dt)
+                            else:
+                                # сделка в ту же сторону что и уже открытая
+                                # @TODO возможно есть смысл переоткрыть сделку
+                                pass
+                        else:
                             open_deal = possible_deal
                             self._add_deal_to_chart(open_deal, dt)
-                        else:
-                            # сделка в ту же сторону что и уже открытая
-                            # @TODO возможно есть смысл переоткрыть сделку
-                            pass
-                    else:
-                        open_deal = possible_deal
-                        self._add_deal_to_chart(open_deal, dt)
+                except CloseOpenedDeal:
+                    if open_deal:
+                        profit = open_deal.close(price)
+                        if profit is not None:
+                            # закрываем сделку и наносим на график
+                            self._handle_deal_profit(profit, dt, price)
+                        open_deal = None
 
             fig.update_layout(annotations=self.annotations)
             fig.show()

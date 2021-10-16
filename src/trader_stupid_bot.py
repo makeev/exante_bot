@@ -100,7 +100,7 @@ async def main():
                 money_manager=SimpleMoneyManager(
                     order_amount=0.35,
                     diff=Decimal(100),
-                    stop_loss_factor=1.2,
+                    stop_loss_factor=2.2,
                     take_profit_factor=6,
                     trailing_stop=False
                 ),
