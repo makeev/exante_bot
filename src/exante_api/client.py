@@ -246,11 +246,14 @@ class ExanteApi:
             assert r.status == 202
             return r
 
-    async def open_position(self,symbol, side, quantity, take_profit, stop_loss, account_id=None):
+    async def open_position(self,symbol, side, quantity, take_profit, stop_loss, account_id=None, duration=None):
         if account_id is None:
             account_id = self.account_id
         else:
             account_id = account_id.upper()
+
+        if not duration:
+            duration = 'good_till_cancel'
 
         return await self.place_order({
             "accountId": account_id,
@@ -258,7 +261,7 @@ class ExanteApi:
             "side": side,
             "quantity": str(quantity),
             "orderType": "market",
-            "duration": "good_till_cancel",
+            "duration": duration,
             "takeProfit": str(take_profit),
             "stopLoss": str(stop_loss),
         })
@@ -290,7 +293,7 @@ class ExanteApi:
 
         return result
 
-    async def close_position(self, symbol, account_id=None, position=None):
+    async def close_position(self, symbol, account_id=None, position=None, duration=None):
         """
         raise PositionNotFound and PositionAlreadyClosed
         """
@@ -298,6 +301,9 @@ class ExanteApi:
             account_id = self.account_id
         else:
             account_id = account_id.upper()
+
+        if not duration:
+            duration = 'good_till_cancel'
 
         # получаем данные по открытой позиции
         if not position:
@@ -326,7 +332,7 @@ class ExanteApi:
             "side": side,
             "quantity": quantity,
             "orderType": "market",
-            "duration": "good_till_cancel",
+            "duration": duration,
         })
 
     async def get_last_quote(self, symbol):

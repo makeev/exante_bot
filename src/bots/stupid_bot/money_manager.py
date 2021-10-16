@@ -7,7 +7,7 @@ class SimpleMoneyManager:
 
     def __init__(self, order_amount, diff, stop_loss_factor, take_profit_factor, trailing_stop=False):
         self.order_amount = order_amount
-        self.diff = diff  # базовая разницу которую умножаем на риски
+        self.diff = Decimal(diff)  # базовая разницу которую умножаем на риски
         self.stop_loss_factor = stop_loss_factor  # размер пропорции sl
         self.take_profit_factor = take_profit_factor  # размер пропорции tp
         self.trailing_stop = trailing_stop
