@@ -30,8 +30,8 @@ async def send_admin_message(message, prefix=None):
     import settings
     b = aiogram.Bot(token=settings.TELEGRAM_TOKEN)
     if not prefix:
-        prefix = "#exantebot "
-    await b.send_message(settings.TELEGRAM_CHAT_ID, prefix+message)
+        prefix = "#exantebot"
+    await b.send_message(settings.TELEGRAM_CHAT_ID, prefix+' '+message)
 
 
 def max_diff(a):
