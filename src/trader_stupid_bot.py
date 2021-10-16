@@ -13,7 +13,7 @@ from helpers import get_mid_price, send_admin_message
 import settings
 
 symbol = 'BTC.USD'
-account_name = 'demo1'
+account_name = 'demo_1'
 prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300  # 5 min
 breakeven_profit = 100
