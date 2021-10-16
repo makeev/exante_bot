@@ -4,7 +4,8 @@ import sys
 import time
 from decimal import Decimal
 
-from bots.rsi_bot.bot import RsiBot
+from bots.base import CloseOpenedDeal
+from bots.sma_trend_bot.bot import SmaTrendBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, Event, HistoricalData
 from exante_api.client import TooManyRequests, PositionAlreadyClosed, PositionNotFound, PositionOrdersNotFound
@@ -12,18 +13,17 @@ from helpers import get_mid_price, send_admin_message
 
 import settings
 
-symbol = 'EUR/NZD.E.FX'
+symbol = 'EUR/CHF.E.FX'
 account_name = 'demo_1'
 time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=100000,
     diff=Decimal(0.001),
-    stop_loss_factor=0.5,
-    take_profit_factor=5,
+    stop_loss_factor=2,
+    take_profit_factor=6,
 )
 bot_params = {
-    'upper_band': 70,
-    'lower_band': 30,
+    "trend_len": 5
 }
 breakeven_profit = 100
 
@@ -36,7 +36,7 @@ logging.info("logging test")
 
 
 class Processor:
-    def __init__(self, historical_data: HistoricalData, bot: RsiBot, api: ExanteApi):
+    def __init__(self, historical_data: HistoricalData, bot: SmaTrendBot, api: ExanteApi):
         self.historical_data = historical_data
         self.bot = bot
         self.api = api
@@ -56,41 +56,51 @@ class Processor:
                 self.bot.add_candle(self.historical_data.get_last_candle())
 
                 price = get_mid_price(bid=e.bid, ask=e.ask)
-                deal = await self.bot.check_price(price)
-                if deal:
-                    # закрываем позицию, если открыта
-                    position = None
-                    try:
-                        position = await self.api.get_position(symbol)
-                        if position:
-                            position_side = 'sell' if float(position['quantity']) < 0 else 'buy'
-                            # закрываем позицию только если она открыта в противоположную сторону
-                            if position_side != deal.side:
-                                # закрываем, надо открыть в другую сторону
-                                await self.api.close_position(symbol, position=position)
-                                # даем время позиции закрыться
-                                await asyncio.sleep(0.5)
-                                position = None
-                    except (PositionAlreadyClosed, PositionNotFound):
-                        # нечего закрывать, все ок
+                try:
+                    deal = await self.bot.check_price(price)
+                    if deal:
+                        # закрываем позицию, если открыта
                         position = None
+                        try:
+                            position = await self.api.get_position(symbol)
+                            if position:
+                                position_side = 'sell' if float(position['quantity']) < 0 else 'buy'
+                                # закрываем позицию только если она открыта в противоположную сторону
+                                if position_side != deal.side:
+                                    # закрываем, надо открыть в другую сторону
+                                    await self.api.close_position(symbol, position=position)
+                                    # даем время позиции закрыться
+                                    await asyncio.sleep(0.5)
+                                    position = None
+                        except (PositionAlreadyClosed, PositionNotFound):
+                            # нечего закрывать, все ок
+                            position = None
 
-                    # открываем новую позицию
-                    if not position:
-                        await self.api.open_position(
+                        # открываем новую позицию
+                        if not position:
+                            await self.api.open_position(
+                                symbol=symbol,
+                                side=deal.side,
+                                quantity=deal.amount,
+                                take_profit=deal.take_profit,
+                                stop_loss=deal.stop_loss,
+                            )
+
+                        await send_admin_message("{symbol} new deal {side}: \namount={amount} \ntp={take_profit} \nsl={stop_loss}".format(
                             symbol=symbol,
                             side=deal.side,
-                            quantity=deal.amount,
+                            amount=deal.amount,
                             take_profit=deal.take_profit,
                             stop_loss=deal.stop_loss,
-                        )
-
-                    await send_admin_message("new deal {side}: \namount={amount} \ntp={take_profit} \nsl={stop_loss}".format(
-                        side=deal.side,
-                        amount=deal.amount,
-                        take_profit=deal.take_profit,
-                        stop_loss=deal.stop_loss,
-                    ))
+                        ))
+                except CloseOpenedDeal:
+                    position = await self.api.get_position(symbol)
+                    if position:
+                        await self.api.close_position(symbol, position=position)
+                        # даем время позиции закрыться
+                        await asyncio.sleep(0.5)
+                        position = None
+                    await send_admin_message('%s close position signal' % symbol)
 
             # проверяем можно ли двинуть в безубыток
             time_since_last_check = time.time() - self.last_check_ts
@@ -118,7 +128,7 @@ async def main():
             print('исторчиеские данные загружены: %d' % len(data))
 
             # инициируем бота которым будем торговать
-            bot = RsiBot(
+            bot = SmaTrendBot(
                 money_manager=money_manager,
                 historical_ohlcv=historical_data.get_list(),
                 **bot_params

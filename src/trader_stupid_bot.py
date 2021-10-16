@@ -139,7 +139,6 @@ async def main():
             await asyncio.sleep(3)
         finally:
             await api.close()
-            await send_admin_message("api закрыто")
 
 
 if __name__ == '__main__':
