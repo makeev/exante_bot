@@ -1,18 +1,20 @@
 import asyncio
 import logging
 import sys
+import time
 from decimal import Decimal
 
 from bots.stupid_bot import StupidBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, Event, HistoricalData
-from exante_api.client import TooManyRequests, PositionAlreadyClosed, PositionNotFound
+from exante_api.client import TooManyRequests, PositionAlreadyClosed, PositionNotFound, PositionOrdersNotFound
 from helpers import get_mid_price, send_admin_message
 
 import settings
 
 symbol = 'BTC.USD'
 time_interval = 300  # 5 min
+breakeven_profit = 100
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,6 +78,19 @@ class Processor:
                         take_profit=deal.take_profit,
                         stop_loss=deal.stop_loss,
                     ))
+
+            # проверяем можно ли двинуть в безубыток
+            time_since_last_check = time.time() - self.last_check_ts
+            if time_since_last_check > 5:  # не чаще раз в 5с
+                self.last_check_ts = time.time()
+                try:
+                    position = await self.api.get_position(symbol)
+                    if position and float(position['convertedPnl']) >= breakeven_profit:
+                        await self.api.move_to_breakeven(symbol)
+                except PositionOrdersNotFound:
+                    await send_admin_message('PositionOrdersNotFound: %s' % position)
+                except AssertionError as e:
+                    await send_admin_message('AssertionError: %s' % str(e))
 
 
 async def main():
