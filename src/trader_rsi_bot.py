@@ -14,6 +14,7 @@ import settings
 
 symbol = 'EUR/NZD.E.FX'
 account_name = 'demo_1'
+prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=100000,
@@ -90,7 +91,7 @@ class Processor:
                         amount=deal.amount,
                         take_profit=deal.take_profit,
                         stop_loss=deal.stop_loss,
-                    ))
+                    ), prefix)
 
             # проверяем можно ли двинуть в безубыток
             time_since_last_check = time.time() - self.last_check_ts
@@ -101,9 +102,9 @@ class Processor:
                     if position and float(position['convertedPnl']) >= breakeven_profit:
                         await self.api.move_to_breakeven(symbol)
                 except PositionOrdersNotFound:
-                    await send_admin_message('PositionOrdersNotFound: %s' % position)
+                    await send_admin_message('PositionOrdersNotFound: %s' % position, prefix)
                 except AssertionError as e:
-                    await send_admin_message('AssertionError: %s' % str(e))
+                    await send_admin_message('AssertionError: %s' % str(e), prefix)
 
 
 async def main():
@@ -132,11 +133,11 @@ async def main():
         except TooManyRequests:
             # иногда бросает get_ohlcv, надо просто подождать
             logging.error('TooManyRequests')
-            await send_admin_message("TooManyRequests")
+            await send_admin_message("TooManyRequests", prefix)
             await asyncio.sleep(60)
         except Exception as e:
             logging.exception('неведомая хуйня:')
-            await send_admin_message("неведомая хуйня: %s" % e)
+            await send_admin_message("неведомая хуйня: %s" % e, prefix)
             await asyncio.sleep(3)
         finally:
             await api.close()
