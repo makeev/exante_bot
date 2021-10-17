@@ -109,17 +109,16 @@ async def main():
             # инициируем бота которым будем торговать
             params = {
                 'sma_size': 100,
-                'trend_len': 5,
-                'pinbar_size': 1.5,
+                'trend_len': 2,
+                'pinbar_size': 2.0,
                 'super_pinbar_size': None
             }
             bot = StupidBot(
                 money_manager=SimpleMoneyManager(
-                    order_amount=0.35,
+                    order_amount=0.30,
                     diff=Decimal(100),
-                    stop_loss_factor=2.2,
-                    take_profit_factor=6,
-                    trailing_stop=False
+                    stop_loss_factor=2.0,
+                    take_profit_factor=7,
                 ),
                 historical_ohlcv=historical_data.get_list(),
                 **params
