@@ -98,7 +98,7 @@ class HistoricalData:
             cols=1,
             shared_xaxes=True,
             vertical_spacing=0.2,
-            row_heights=[1000, 150]
+            row_heights=[1000, 250]
             # row_width=[0.5, 0.5]
         )
 

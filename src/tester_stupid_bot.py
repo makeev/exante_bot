@@ -97,22 +97,22 @@ class Tester:
             with open("history_btc_usd.json", 'r') as json_file:
                 data = json.load(json_file)
 
-            data = data[:1000]
+            data = data[:5000]
             historical_data = HistoricalData(time_interval, data)
 
             # инициируем бота которого будем тестировать
             params = {
                 'sma_size': 100,
-                'trend_len': 5,
-                'pinbar_size': 1.5,
+                'trend_len': 2,
+                'pinbar_size': 2.0,
                 'super_pinbar_size': None
             }
             bot = StupidBot(
                 money_manager=SimpleMoneyManager(
                     order_amount=0.45,
                     diff=Decimal(100),
-                    stop_loss_factor=1.2,
-                    take_profit_factor=6,
+                    stop_loss_factor=2.0,
+                    take_profit_factor=7,
                     trailing_stop=False
                 ),
                 historical_ohlcv=[],
