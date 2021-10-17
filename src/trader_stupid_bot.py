@@ -31,6 +31,7 @@ class Processor:
         self.historical_data = historical_data
         self.bot = bot
         self.api = api
+        self.last_check_ts = time.time()
 
     async def on_event(self, data):
         e = Event(data)
