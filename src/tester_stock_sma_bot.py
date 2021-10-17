@@ -4,27 +4,28 @@ from decimal import Decimal
 
 import settings
 from bots.base import CloseOpenedDeal
-from bots.stock_bot.bot import StockBot
+from bots.stock_sma_bot.bot import StockSmaBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, HistoricalData
 
 api = ExanteApi(**settings.ACCOUNTS['demo_2'])
-# symbol = 'URA.ARCA'
-symbol = 'BOTZ.NASDAQ'
+symbol = 'URA.ARCA'
+# symbol = 'BOTZ.NASDAQ'
 time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=100,
     diff=0.2,
-    stop_loss_factor=1,
+    stop_loss_factor=2,
     take_profit_factor=8,
 )
 bot_params = {
-    "upper_band": 73,
-    "lower_band": 28,
+    "trend_len": 2,
     "is_short_allowed": False,
 }
 max_candles = 5000
 update_file = False
+bot_class = StockSmaBot
+show_plot = True
 
 
 class Tester:
@@ -120,7 +121,7 @@ class Tester:
             # exit()
 
             # инициируем бота которого будем тестировать
-            bot = StockBot(
+            bot = bot_class(
                 money_manager=money_manager,
                 historical_ohlcv=[],
                 **bot_params
@@ -177,7 +178,8 @@ class Tester:
                         open_deal = None
 
             fig.update_layout(annotations=self.annotations)
-            fig.show()
+            if show_plot:
+                fig.show()
             print("""
             take_profit_deals: {take_profit_deals}
             stop_loss_deals: {stop_loss_deals}

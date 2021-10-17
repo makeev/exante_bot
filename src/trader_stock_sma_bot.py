@@ -4,7 +4,7 @@ import sys
 import time
 
 from bots.base import CloseOpenedDeal
-from bots.stock_bot.bot import StockBot
+from bots.stock_sma_bot.bot import StockSmaBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, Event, HistoricalData
 from exante_api.client import TooManyRequests, PositionAlreadyClosed, PositionNotFound, PositionOrdersNotFound
@@ -12,21 +12,20 @@ from helpers import get_mid_price, send_admin_message
 
 import settings
 
-# symbol = 'URA.ARCA'
-symbol = 'BOTZ.NASDAQ'
+symbol = 'URA.ARCA'
+# symbol = 'BOTZ.NASDAQ'
 account_name = 'demo_2'
 prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300
-bot_class = StockBot
+bot_class = StockSmaBot
 money_manager = SimpleMoneyManager(
     order_amount=1500,
     diff=0.2,
-    stop_loss_factor=1,
+    stop_loss_factor=2,
     take_profit_factor=8,
 )
 bot_params = {
-    "upper_band": 73,
-    "lower_band": 28,
+    "trend_len": 2,
     "is_short_allowed": False,
 }
 breakeven_profit = 100
