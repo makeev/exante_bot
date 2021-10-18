@@ -92,7 +92,7 @@ class Processor:
                         # даем время позиции закрыться
                         await asyncio.sleep(0.5)
                         position = None
-                    await send_admin_message('%s close position signal' % symbol, prefix=prefix)
+                        await send_admin_message('%s close position signal' % symbol, prefix=prefix)
 
             # проверяем можно ли двинуть в безубыток
             time_since_last_check = time.time() - self.last_check_ts
