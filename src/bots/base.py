@@ -29,6 +29,7 @@ class CandleStick:
     def __init__(self, timestamp, open, high, low, close):
         self.timestamp = timestamp
         self.formatted_date = datetime.fromtimestamp(self.timestamp).strftime('%Y-%m-%d %H:%M:%S.%f')
+        self.datetime = datetime.fromtimestamp(self.timestamp)
         self.open = Decimal(open)
         self.high = Decimal(high)
         self.low = Decimal(low)

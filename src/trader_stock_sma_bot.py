@@ -27,6 +27,7 @@ money_manager = SimpleMoneyManager(
 bot_params = {
     "trend_len": 2,
     "is_short_allowed": False,
+    "only_main_session": True
 }
 breakeven_profit = 100
 

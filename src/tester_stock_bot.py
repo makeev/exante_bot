@@ -22,6 +22,7 @@ bot_params = {
     "upper_band": 73,
     "lower_band": 28,
     "is_short_allowed": False,
+    "only_main_session": True
 }
 max_candles = 5000
 update_file = False
