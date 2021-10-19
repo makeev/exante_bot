@@ -52,9 +52,14 @@ class StockBot(BaseBot):
             if last_rsi >= upper_band:
                 # перекупленность
                 self.overbought = True
+                self.oversold = False
             elif last_rsi <= lower_band:
                 # перепроданность
                 self.oversold = True
+                self.overbought = False
+            else:
+                self.overbought = False
+                self.oversold = False
 
         # мы уже в зоне перекупленности/перепроданности
         # ждем когда индикатор вернется обратно, чтобы открыть сделку
