@@ -86,12 +86,12 @@ class Processor:
                             stop_loss=deal.stop_loss,
                         )
 
-                    await send_admin_message("new deal {side}: \namount={amount} \ntp={take_profit} \nsl={stop_loss}".format(
-                        side=deal.side,
-                        amount=deal.amount,
-                        take_profit=deal.take_profit,
-                        stop_loss=deal.stop_loss,
-                    ), prefix)
+                        await send_admin_message("new deal {side}: \namount={amount} \ntp={take_profit} \nsl={stop_loss}".format(
+                            side=deal.side,
+                            amount=deal.amount,
+                            take_profit=deal.take_profit,
+                            stop_loss=deal.stop_loss,
+                        ), prefix)
 
             # проверяем можно ли двинуть в безубыток
             time_since_last_check = time.time() - self.last_check_ts

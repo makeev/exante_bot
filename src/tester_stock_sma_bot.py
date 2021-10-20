@@ -24,7 +24,7 @@ bot_params = {
     "only_main_session": True
 }
 max_candles = 5000
-update_file = False
+update_file = True
 bot_class = StockSmaBot
 show_plot = True
 
