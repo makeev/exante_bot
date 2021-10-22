@@ -13,14 +13,18 @@ time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=100000,
     diff=Decimal(0.001),
-    stop_loss_factor=1.5,
-    take_profit_factor=6,
+    stop_loss_factor=2,
+    take_profit_factor=10,
     trailing_stop=False
 )
 bot_params = {
-    'upper_band': 70,
-    'lower_band': 30,
+    'upper_band': 80,
+    'lower_band': 20,
 }
+bot_class = RsiBot
+max_candles = 5000
+update_file = False
+show_plot = True
 
 
 class Tester:
@@ -98,23 +102,21 @@ class Tester:
     async def do(self):
         try:
             filename = 'history_%s' % symbol.replace('/', '_')
-            # r = await api.get_ohlcv(symbol, time_interval, size=5000)
-            # data = await r.json()
-            #
-            # with open('history_eur_nzd.json', 'w+') as output_file:
-            #     json.dump(data, output_file)
+            if update_file:
+                r = await api.get_ohlcv(symbol, time_interval, size=5000)
+                data = await r.json()
 
-            with open("history_eur_nzd.json", 'r') as json_file:
-                data = json.load(json_file)
+                with open('history_eur_nzd.json', 'w+') as output_file:
+                    json.dump(data, output_file)
+            else:
+                with open("history_eur_nzd.json", 'r') as json_file:
+                    data = json.load(json_file)
 
-            data = data[:1000]
+            data = data[:max_candles]
             historical_data = HistoricalData(time_interval, data)
-            # fig = historical_data.get_plotly_figure()
-            # fig.show()
-            # exit()
 
             # инициируем бота которого будем тестировать
-            bot = RsiBot(
+            bot = bot_class(
                 money_manager=money_manager,
                 historical_ohlcv=[],
                 **bot_params
@@ -163,7 +165,9 @@ class Tester:
                         self._add_deal_to_chart(open_deal, dt)
 
             fig.update_layout(annotations=self.annotations)
-            fig.show()
+            if show_plot:
+                fig.show()
+
             print("""
             take_profit_deals: {take_profit_deals}
             stop_loss_deals: {stop_loss_deals}

@@ -62,6 +62,7 @@ class StockSmaBot(BaseBot):
             else:
                 if price < sma_30[-1] and price > sma_50[-1]:
                     order_type = Signal.BUY
+                # order_type = Signal.BUY
         else:
             if not (sma_100[-1] > sma_50[-1] > sma_30[-1] or sma_100[-1] < sma_50[-1] < sma_30[-1]):
                 order_type = Signal.CLOSE

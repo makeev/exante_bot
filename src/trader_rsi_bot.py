@@ -17,14 +17,14 @@ account_name = 'demo_1'
 prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300
 money_manager = SimpleMoneyManager(
-    order_amount=100000,
+    order_amount=50000,
     diff=Decimal(0.001),
-    stop_loss_factor=0.5,
-    take_profit_factor=5,
+    stop_loss_factor=2,
+    take_profit_factor=10,
 )
 bot_params = {
-    'upper_band': 70,
-    'lower_band': 30,
+    'upper_band': 80,
+    'lower_band': 20,
 }
 breakeven_profit = 100
 
@@ -60,7 +60,6 @@ class Processor:
                 deal = await self.bot.check_price(price)
                 if deal:
                     # закрываем позицию, если открыта
-                    position = None
                     try:
                         position = await self.api.get_position(symbol)
                         if position:
@@ -95,7 +94,7 @@ class Processor:
 
             # проверяем можно ли двинуть в безубыток
             time_since_last_check = time.time() - self.last_check_ts
-            if time_since_last_check > 5:  # не чаще раз в 5с
+            if time_since_last_check > 10:  # не чаще раз в 5с
                 self.last_check_ts = time.time()
                 try:
                     position = await self.api.get_position(symbol)

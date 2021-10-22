@@ -243,7 +243,9 @@ class ExanteApi:
                     "quantity": sl_order['orderParameters']['quantity']
                 }
             )
-            assert r.status == 202
+            text = await r.text()
+            error = '%s %s' % (r.status, text)
+            assert r.status == 202, error
             return r
 
     async def open_position(self,symbol, side, quantity, take_profit, stop_loss, account_id=None, duration=None):

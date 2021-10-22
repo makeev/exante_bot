@@ -24,7 +24,7 @@ money_manager = SimpleMoneyManager(
     take_profit_factor=6,
 )
 bot_params = {
-    "trend_len": 5
+    "trend_len": 2
 }
 breakeven_profit = 100
 
@@ -61,7 +61,6 @@ class Processor:
                     deal = await self.bot.check_price(price)
                     if deal:
                         # закрываем позицию, если открыта
-                        position = None
                         try:
                             position = await self.api.get_position(symbol)
                             if position:
@@ -104,7 +103,7 @@ class Processor:
 
             # проверяем можно ли двинуть в безубыток
             time_since_last_check = time.time() - self.last_check_ts
-            if time_since_last_check > 5:  # не чаще раз в 5с
+            if time_since_last_check > 10:  # не чаще раз в 5с
                 self.last_check_ts = time.time()
                 try:
                     position = await self.api.get_position(symbol)

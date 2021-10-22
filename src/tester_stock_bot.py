@@ -24,8 +24,8 @@ bot_params = {
     "is_short_allowed": False,
     "only_main_session": True
 }
-max_candles = 5000
-update_file = False
+max_candles = 200
+update_file = True
 
 
 class Tester:

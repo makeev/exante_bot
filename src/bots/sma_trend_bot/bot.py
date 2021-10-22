@@ -27,7 +27,15 @@ class SmaTrendBot(BaseBot):
             # недостаточно свечек для принятия решения
             return
 
+        is_short_allowed = self.params.get('is_short_allowed', False)
         trend_len = self.params.get('trend_len', 5)
+        only_main_session = self.params.get('only_main_session', False)
+
+        if only_main_session:
+            last_candle = self.get_last_candle()
+            if last_candle.datetime.hour < 16 or last_candle.datetime.hour >= 23:
+                # торгуем только в основную сессию
+                return
 
         close_array = [float(c.close) for c in self.historical_ohlcv]
         sma_100 = SMA(np.array(close_array), 100)
@@ -48,9 +56,11 @@ class SmaTrendBot(BaseBot):
         order_type = False
         if has_trend:
             if sma_100[-1] > sma_50[-1] > sma_30[-1]:
-                order_type = Signal.SELL
+                order_type = Signal.SELL if is_short_allowed else Signal.CLOSE
             else:
-                order_type = Signal.BUY
+                if price < sma_30[-1] and price > sma_50[-1]:
+                    order_type = Signal.BUY
+                # order_type = Signal.BUY
         else:
             if not (sma_100[-1] > sma_50[-1] > sma_30[-1] or sma_100[-1] < sma_50[-1] < sma_30[-1]):
                 order_type = Signal.CLOSE

@@ -20,8 +20,13 @@ money_manager = SimpleMoneyManager(
     take_profit_factor=6,
     trailing_stop=False
 )
+bot_class = SmaTrendBot
+max_candles = 5000
+update_file = False
+show_plot = True
 bot_params = {
-    "trend_len": 5
+    "trend_len": 2,
+    "is_short_allowed": True,
 }
 
 
@@ -101,23 +106,21 @@ class Tester:
         try:
             filename = 'history_%s' % symbol.replace('/', '_')
 
-            # r = await api.get_ohlcv(symbol, time_interval, size=5000)
-            # data = await r.json()
-            #
-            # with open(filename, 'w+') as output_file:
-            #     json.dump(data, output_file)
+            if update_file:
+                r = await api.get_ohlcv(symbol, time_interval, size=5000)
+                data = await r.json()
 
-            with open(filename, 'r') as json_file:
-                data = json.load(json_file)
+                with open(filename, 'w+') as output_file:
+                    json.dump(data, output_file)
+            else:
+                with open(filename, 'r') as json_file:
+                    data = json.load(json_file)
 
-            data = data[:5000]
+            data = data[:max_candles]
             historical_data = HistoricalData(time_interval, data)
-            # fig = historical_data.get_plotly_figure()
-            # fig.show()
-            # exit()
 
             # инициируем бота которого будем тестировать
-            bot = SmaTrendBot(
+            bot = bot_class(
                 money_manager=money_manager,
                 historical_ohlcv=[],
                 **bot_params
@@ -174,7 +177,9 @@ class Tester:
                         open_deal = None
 
             fig.update_layout(annotations=self.annotations)
-            fig.show()
+            if show_plot:
+                fig.show()
+
             print("""
             take_profit_deals: {take_profit_deals}
             stop_loss_deals: {stop_loss_deals}
