@@ -35,7 +35,9 @@ class StockSmaBot(BaseBot):
 
         if only_main_session:
             last_candle = self.get_last_candle()
-            if last_candle.datetime.hour < 16 or last_candle.datetime.hour >= 23:
+            if last_candle.datetime.hour < 16 \
+                    or (last_candle.datetime.hour == 16 and last_candle.datetime.minute < 30) \
+                    or last_candle.datetime.hour >= 23:
                 # торгуем только в основную сессию
                 return
 

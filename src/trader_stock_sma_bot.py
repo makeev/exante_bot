@@ -79,13 +79,13 @@ class Processor:
                                 duration='day',
                             )
 
-                        await send_admin_message("{symbol} new deal {side}: \namount={amount} \ntp={take_profit} \nsl={stop_loss}".format(
-                            symbol=symbol,
-                            side=deal.side,
-                            amount=deal.amount,
-                            take_profit=deal.take_profit,
-                            stop_loss=deal.stop_loss,
-                        ), prefix=prefix)
+                            await send_admin_message("{symbol} new deal {side}: \namount={amount} \ntp={take_profit} \nsl={stop_loss}".format(
+                                symbol=symbol,
+                                side=deal.side,
+                                amount=deal.amount,
+                                take_profit=deal.take_profit,
+                                stop_loss=deal.stop_loss,
+                            ), prefix=prefix)
                 except CloseOpenedDeal:
                     position = await self.api.get_position(symbol)
                     if position:
