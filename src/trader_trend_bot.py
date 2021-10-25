@@ -20,11 +20,12 @@ time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=50000,
     diff=Decimal(0.001),
-    stop_loss_factor=2,
-    take_profit_factor=6,
+    stop_loss_factor=3,
+    take_profit_factor=8,
 )
 bot_params = {
-    "trend_len": 2
+    "trend_len": 2,
+    "is_short_allowed": True
 }
 breakeven_profit = 100
 

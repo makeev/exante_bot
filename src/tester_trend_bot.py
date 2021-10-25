@@ -16,8 +16,8 @@ time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=50000,
     diff=Decimal(0.001),
-    stop_loss_factor=2,
-    take_profit_factor=6,
+    stop_loss_factor=3,
+    take_profit_factor=8,
     trailing_stop=False
 )
 bot_class = SmaTrendBot
