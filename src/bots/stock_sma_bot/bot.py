@@ -4,6 +4,7 @@ import numpy as np
 from talib import RSI, SMA
 
 from bots.base import Result, BaseBot, Signal, Deal, CloseOpenedDeal
+from helpers import get_trend_for
 
 
 class StockSmaBot(BaseBot):
@@ -46,6 +47,9 @@ class StockSmaBot(BaseBot):
         sma_50 = SMA(np.array(close_array), 50)
         sma_30 = SMA(np.array(close_array), 30)
 
+        # sma_300 = SMA(np.array(close_array), 300)
+        # main_trend = get_trend_for(list(sma_300[-3:]))
+
         j = -trend_len - 1
         had_trend = sma_100[j] > sma_50[j] > sma_30[j] or sma_100[j] < sma_50[j] < sma_30[j]
 
@@ -57,7 +61,7 @@ class StockSmaBot(BaseBot):
                     has_trend = False
                     break
 
-        order_type = False
+        order_type = None
         if has_trend:
             if sma_100[-1] > sma_50[-1] > sma_30[-1]:
                 order_type = Signal.SELL if is_short_allowed else Signal.CLOSE

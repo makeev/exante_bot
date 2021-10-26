@@ -9,8 +9,10 @@ from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, HistoricalData
 
 api = ExanteApi(**settings.ACCOUNTS['demo_2'])
-# symbol = 'URA.ARCA'
-symbol = 'BOTZ.NASDAQ'
+symbol = 'URA.ARCA'
+# symbol = 'BOTZ.NASDAQ'
+# symbol = 'ARKK.ARCA'
+
 time_interval = 300
 money_manager = SimpleMoneyManager(
     order_amount=100,
@@ -24,8 +26,8 @@ bot_params = {
     "is_short_allowed": False,
     "only_main_session": True
 }
-max_candles = 200
-update_file = True
+max_candles = 5000
+update_file = False
 
 
 class Tester:
