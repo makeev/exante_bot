@@ -239,7 +239,7 @@ class ExanteApi:
             r = await self.update_order(
                 sl_order['orderId'],
                 {
-                    "stopPrice": str(new_stop_loss),
+                    "stopPrice": '%.2f' % new_stop_loss,
                     "quantity": sl_order['orderParameters']['quantity']
                 }
             )
