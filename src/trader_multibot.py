@@ -120,7 +120,10 @@ class Processor:
 
             # проверяем можно ли двинуть в безубыток
             last_candle = self.bot.get_last_candle()
-            if last_candle.datetime.hour < 16 \
+
+            if not last_candle:
+                pass
+            elif last_candle.datetime.hour < 16 \
                     or (last_candle.datetime.hour == 16 and last_candle.datetime.minute < 30) \
                     or last_candle.datetime.hour >= 23:
                 # торгуем только в основную сессию

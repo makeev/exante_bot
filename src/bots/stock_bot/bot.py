@@ -135,4 +135,5 @@ class StockBot(BaseBot):
         return self.get_last_candle()
 
     def get_last_candle(self):
-        return self.historical_ohlcv[-1]
+        if self.historical_ohlcv:
+            return self.historical_ohlcv[-1]
