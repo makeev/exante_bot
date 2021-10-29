@@ -3,7 +3,9 @@ import json
 from decimal import Decimal
 
 import settings
-from bots.base import CloseOpenedDeal
+from bots.base import CloseOpenedDeal, Signal
+from bots.multibot.bot import MultiBot
+from bots.stock_bot.bot import StockBot
 from bots.stock_sma_bot.bot import StockSmaBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, HistoricalData
@@ -13,21 +15,46 @@ symbol = 'URA.ARCA'
 # symbol = 'BOTZ.NASDAQ'
 # symbol = 'ARKK.ARCA'
 time_interval = 300
-money_manager = SimpleMoneyManager(
-    order_amount=100,
-    diff=0.2,
-    stop_loss_factor=2,
-    take_profit_factor=8,
-)
-bot_params = {
-    "trend_len": 2,
-    "is_short_allowed": False,
-    "only_main_session": True
-}
 max_candles = 5000
 update_file = False
 bot_class = StockSmaBot
 show_plot = True
+
+# инициируем бота которого будем тестировать
+bot_1 = StockSmaBot(
+
+    money_manager=SimpleMoneyManager(
+        order_amount=100,
+        diff=0.2,
+        stop_loss_factor=2,
+        take_profit_factor=8,
+    ),
+    historical_ohlcv=[],
+    **{
+        "trend_len": 2,
+        "is_short_allowed": False,
+        "only_main_session": True,
+        "close_signal": Signal.CLOSE
+    }
+)
+bot_2 = StockBot(
+
+    money_manager=SimpleMoneyManager(
+        order_amount=100,
+        diff=0.2,
+        stop_loss_factor=1,
+        take_profit_factor=6,
+    ),
+    historical_ohlcv=[],
+    **{
+        "upper_band": 73,
+        "lower_band": 28,
+        "is_short_allowed": False,
+        "only_main_session": True,
+        "close_signal": Signal.CLOSE
+    }
+)
+bot = MultiBot(bot_1, bot_2)
 
 
 class Tester:
@@ -122,13 +149,6 @@ class Tester:
             # fig.show()
             # exit()
 
-            # инициируем бота которого будем тестировать
-            bot = bot_class(
-                money_manager=money_manager,
-                historical_ohlcv=[],
-                **bot_params
-            )
-
             fig = historical_data.get_plotly_figure()
             open_deal = None
 
@@ -156,14 +176,15 @@ class Tester:
                         if open_deal:
                             # если новая сделка в другую сторону
                             if open_deal.side != possible_deal.side:
+                                pass
                                 # то закрываем старую сделку и открываем новую
-                                profit = open_deal.close(price)
-                                if profit is not None:
-                                    # закрываем сделку и наносим на график
-                                    self._handle_deal_profit(profit, dt, price)
-
-                                open_deal = possible_deal
-                                self._add_deal_to_chart(open_deal, dt)
+                                # profit = open_deal.close(price)
+                                # if profit is not None:
+                                #     # закрываем сделку и наносим на график
+                                #     self._handle_deal_profit(profit, dt, price)
+                                #
+                                # open_deal = possible_deal
+                                # self._add_deal_to_chart(open_deal, dt)
                             else:
                                 # сделка в ту же сторону что и уже открытая
                                 # @TODO возможно есть смысл переоткрыть сделку
@@ -172,12 +193,13 @@ class Tester:
                             open_deal = possible_deal
                             self._add_deal_to_chart(open_deal, dt)
                 except CloseOpenedDeal:
-                    if open_deal:
-                        profit = open_deal.close(price)
-                        if profit is not None:
-                            # закрываем сделку и наносим на график
-                            self._handle_deal_profit(profit, dt, price)
-                        open_deal = None
+                    pass
+                    # if open_deal:
+                    #     profit = open_deal.close(price)
+                    #     if profit is not None:
+                    #         # закрываем сделку и наносим на график
+                    #         self._handle_deal_profit(profit, dt, price)
+                    #     open_deal = None
 
             fig.update_layout(annotations=self.annotations)
             if show_plot:

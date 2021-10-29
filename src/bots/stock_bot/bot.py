@@ -35,6 +35,7 @@ class StockBot(BaseBot):
         lower_band = self.params.get('lower_band', 30)
         is_short_allowed = self.params.get('is_short_allowed', False)
         only_main_session = self.params.get('only_main_session', False)
+        close_signal = self.params.get('close_signal', Signal.CLOSE)
 
         if only_main_session:
             last_candle = self.get_last_candle()
@@ -69,7 +70,7 @@ class StockBot(BaseBot):
         if self.overbought:
             if current_rsi <= upper_band:
                 self.overbought = False
-                order_type = Signal.SELL if is_short_allowed else Signal.CLOSE
+                order_type = Signal.SELL if is_short_allowed else close_signal
         elif self.oversold:  # нас интересует только покупка
             if current_rsi >= lower_band:
                 self.oversold = False

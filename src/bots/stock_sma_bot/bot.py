@@ -33,6 +33,7 @@ class StockSmaBot(BaseBot):
         is_short_allowed = self.params.get('is_short_allowed', False)
         trend_len = self.params.get('trend_len', 5)
         only_main_session = self.params.get('only_main_session', False)
+        close_signal = self.params.get('close_signal', Signal.CLOSE)
 
         if only_main_session:
             last_candle = self.get_last_candle()
@@ -64,14 +65,14 @@ class StockSmaBot(BaseBot):
         order_type = None
         if has_trend:
             if sma_100[-1] > sma_50[-1] > sma_30[-1]:
-                order_type = Signal.SELL if is_short_allowed else Signal.CLOSE
+                order_type = Signal.SELL if is_short_allowed else close_signal
             else:
                 if price < sma_30[-1] and price > sma_50[-1]:
                     order_type = Signal.BUY
                 # order_type = Signal.BUY
         else:
             if not (sma_100[-1] > sma_50[-1] > sma_30[-1] or sma_100[-1] < sma_50[-1] < sma_30[-1]):
-                order_type = Signal.CLOSE
+                order_type = close_signal
 
         if order_type:
             return Result(signal=order_type, price=price)
