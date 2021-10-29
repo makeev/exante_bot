@@ -15,7 +15,7 @@ from helpers import get_mid_price, send_admin_message
 import settings
 
 symbol = 'URA.ARCA'
-account_name = 'demo_2'
+account_name = 'demo_1'
 prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300
 bot_1 = StockSmaBot(
