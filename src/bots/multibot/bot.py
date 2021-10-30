@@ -26,4 +26,4 @@ class MultiBot(BaseBot):
         return self.bots[0].get_last_candle()
 
     def get_last_candle(self):
-        return self.bots[0].historical_ohlcv[-1]
+        return self.bots[0].get_last_candle()

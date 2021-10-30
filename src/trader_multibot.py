@@ -79,6 +79,7 @@ class Processor:
             self.historical_data.add_data(e.ts, e.bid, e.ask)
 
             if last_ts and last_ts != self.historical_data.last_ts:
+                logging.info('new candle: %s' % data)
                 # начала формироваться новая цена
                 self.bot.add_candle(self.historical_data.get_last_candle())
 
