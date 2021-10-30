@@ -16,7 +16,7 @@ symbol = 'URA.ARCA'
 # symbol = 'ARKK.ARCA'
 time_interval = 300
 max_candles = 5000
-update_file = False
+update_file = True
 bot_class = StockSmaBot
 show_plot = True
 

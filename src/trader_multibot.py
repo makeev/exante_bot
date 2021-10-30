@@ -19,7 +19,6 @@ account_name = 'demo_1'
 prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300
 bot_1 = StockSmaBot(
-
     money_manager=SimpleMoneyManager(
         order_amount=300,
         diff=0.2,
@@ -35,7 +34,6 @@ bot_1 = StockSmaBot(
     }
 )
 bot_2 = StockBot(
-
     money_manager=SimpleMoneyManager(
         order_amount=300,
         diff=0.2,
@@ -87,6 +85,8 @@ class Processor:
                 try:
                     deal = await self.bot.check_price(price)
                     if deal:
+                        logging.info('new deal: %s' % deal)
+                        
                         try:
                             position = await self.api.get_position(symbol)
                         except (PositionAlreadyClosed, PositionNotFound):
