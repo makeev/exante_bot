@@ -86,7 +86,7 @@ class Processor:
                     deal = await self.bot.check_price(price)
                     if deal:
                         logging.info('new deal: %s' % deal)
-                        
+
                         try:
                             position = await self.api.get_position(symbol)
                         except (PositionAlreadyClosed, PositionNotFound):
