@@ -42,7 +42,7 @@ bot_2 = StockBot(
         order_amount=100,
         diff=0.2,
         stop_loss_factor=1,
-        take_profit_factor=6,
+        take_profit_factor=8,
     ),
     historical_ohlcv=[],
     **{
