@@ -1,4 +1,4 @@
-from bots.base import BaseBot
+from bots.base import BaseBot, Signal, CloseOpenedDeal
 
 
 class MultiBot(BaseBot):
@@ -13,10 +13,18 @@ class MultiBot(BaseBot):
             bot.add_candle(candle)
 
     async def check_price(self, price):
+        close = None
+
         for bot in self.bots:
-            deal = await bot.check_price(price)
-            if deal:
-                return deal
+            try:
+                deal = await bot.check_price(price)
+                if deal:
+                    return deal
+            except CloseOpenedDeal:
+                close = Signal.CLOSE
+
+        if close:
+            raise CloseOpenedDeal()
 
     async def check_deal(self, current_price, deal):
         return False

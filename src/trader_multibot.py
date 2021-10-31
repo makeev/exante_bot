@@ -30,7 +30,7 @@ bot_1 = StockSmaBot(
         "trend_len": 2,
         "is_short_allowed": False,
         "only_main_session": True,
-        "close_signal": Signal.CLOSE
+        "close_signal": None
     }
 )
 bot_2 = StockBot(
@@ -111,13 +111,25 @@ class Processor:
                                 stop_loss=deal.stop_loss,
                             ), prefix=prefix)
                 except CloseOpenedDeal:
-                    position = await self.api.get_position(symbol)
-                    if position:
-                        await self.api.close_position(symbol, position=position, duration='day')
-                        # даем время позиции закрыться
-                        await asyncio.sleep(0.5)
-                        position = None
-                        await send_admin_message('%s close position signal' % symbol, prefix=prefix)
+                    logging.info('close signal')
+
+                    last_candle = self.bot.get_last_candle()
+
+                    if not last_candle:
+                        pass
+                    elif last_candle.datetime.hour < 16 \
+                            or (last_candle.datetime.hour == 16 and last_candle.datetime.minute < 30) \
+                            or last_candle.datetime.hour >= 23:
+                        # торгуем только в основную сессию
+                        pass
+                    else:
+                        position = await self.api.get_position(symbol)
+                        if position:
+                            await self.api.close_position(symbol, position=position, duration='day')
+                            # даем время позиции закрыться
+                            await asyncio.sleep(0.5)
+                            position = None
+                            await send_admin_message('%s close position signal' % symbol, prefix=prefix)
 
             # проверяем можно ли двинуть в безубыток
             last_candle = self.bot.get_last_candle()

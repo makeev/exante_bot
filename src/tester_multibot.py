@@ -16,13 +16,12 @@ symbol = 'URA.ARCA'
 # symbol = 'ARKK.ARCA'
 time_interval = 300
 max_candles = 5000
-update_file = True
+update_file = False
 bot_class = StockSmaBot
 show_plot = True
 
 # инициируем бота которого будем тестировать
 bot_1 = StockSmaBot(
-
     money_manager=SimpleMoneyManager(
         order_amount=100,
         diff=0.2,
@@ -34,11 +33,11 @@ bot_1 = StockSmaBot(
         "trend_len": 2,
         "is_short_allowed": False,
         "only_main_session": True,
-        "close_signal": Signal.CLOSE
+        # "close_signal": Signal.CLOSE,
+        "close_signal": None,
     }
 )
 bot_2 = StockBot(
-
     money_manager=SimpleMoneyManager(
         order_amount=100,
         diff=0.2,
@@ -51,7 +50,8 @@ bot_2 = StockBot(
         "lower_band": 28,
         "is_short_allowed": False,
         "only_main_session": True,
-        "close_signal": Signal.CLOSE
+        "close_signal": Signal.CLOSE,
+        # "close_signal": None,
     }
 )
 bot = MultiBot(bot_1, bot_2)
@@ -193,13 +193,12 @@ class Tester:
                             open_deal = possible_deal
                             self._add_deal_to_chart(open_deal, dt)
                 except CloseOpenedDeal:
-                    pass
-                    # if open_deal:
-                    #     profit = open_deal.close(price)
-                    #     if profit is not None:
-                    #         # закрываем сделку и наносим на график
-                    #         self._handle_deal_profit(profit, dt, price)
-                    #     open_deal = None
+                    if open_deal:
+                        profit = open_deal.close(price)
+                        if profit is not None:
+                            # закрываем сделку и наносим на график
+                            self._handle_deal_profit(profit, dt, price)
+                        open_deal = None
 
             fig.update_layout(annotations=self.annotations)
             if show_plot:
