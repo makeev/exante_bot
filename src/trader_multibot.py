@@ -170,7 +170,7 @@ async def main():
             print('исторические данные загружены: %d' % len(data))
 
             # процессор будет обрабатывать все события из стрима
-            bot = bot_factory(historical_data)
+            bot = bot_factory(historical_data.get_list())
             processor = Processor(historical_data, bot=bot, api=api)
             # открываем стрим и слушаем
             logging.info('открываем стрим')
