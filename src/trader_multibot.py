@@ -18,39 +18,6 @@ symbol = 'URA.ARCA'
 account_name = 'demo_1'
 prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300
-bot_1 = StockSmaBot(
-    money_manager=SimpleMoneyManager(
-        order_amount=300,
-        diff=0.2,
-        stop_loss_factor=2,
-        take_profit_factor=8,
-    ),
-    historical_ohlcv=[],
-    **{
-        "trend_len": 2,
-        "is_short_allowed": False,
-        "only_main_session": True,
-        "close_signal": None
-    }
-)
-bot_2 = StockBot(
-    money_manager=SimpleMoneyManager(
-        order_amount=300,
-        diff=0.2,
-        stop_loss_factor=1,
-        take_profit_factor=8,
-    ),
-    historical_ohlcv=[],
-    **{
-        "upper_band": 73,
-        "lower_band": 28,
-        "is_short_allowed": False,
-        "only_main_session": True,
-        "close_signal": Signal.CLOSE
-    }
-)
-# инициируем бота которым будем торговать
-bot = MultiBot(bot_1, bot_2)
 breakeven_profit = 100
 
 logging.basicConfig(
@@ -59,6 +26,42 @@ logging.basicConfig(
     datefmt="%d/%b/%Y %H:%M:%S",
     stream=sys.stdout)
 logging.info("logging test")
+
+
+def bot_factory(historical_data):
+    bot_1 = StockSmaBot(
+        money_manager=SimpleMoneyManager(
+            order_amount=300,
+            diff=0.2,
+            stop_loss_factor=2,
+            take_profit_factor=8,
+        ),
+        historical_ohlcv=historical_data,
+        **{
+            "trend_len": 2,
+            "is_short_allowed": False,
+            "only_main_session": True,
+            "close_signal": None
+        }
+    )
+    bot_2 = StockBot(
+        money_manager=SimpleMoneyManager(
+            order_amount=300,
+            diff=0.2,
+            stop_loss_factor=1,
+            take_profit_factor=8,
+        ),
+        historical_ohlcv=historical_data,
+        **{
+            "upper_band": 73,
+            "lower_band": 28,
+            "is_short_allowed": False,
+            "only_main_session": True,
+            "close_signal": Signal.CLOSE
+        }
+    )
+    # инициируем бота которым будем торговать
+    return MultiBot(bot_1, bot_2)
 
 
 class Processor:
@@ -167,6 +170,7 @@ async def main():
             print('исторические данные загружены: %d' % len(data))
 
             # процессор будет обрабатывать все события из стрима
+            bot = bot_factory(historical_data)
             processor = Processor(historical_data, bot=bot, api=api)
             # открываем стрим и слушаем
             logging.info('открываем стрим')
