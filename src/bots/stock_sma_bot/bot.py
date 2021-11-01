@@ -1,3 +1,4 @@
+import logging
 from typing import Union, List
 
 import numpy as np
@@ -9,7 +10,7 @@ from helpers import get_trend_for
 
 class StockSmaBot(BaseBot):
     min_candles = 20
-    name = 'stock_bot'
+    name = 'stock_sma_bot'
 
     def __init__(self, money_manager, historical_ohlcv: List = None, **params):
         """
@@ -28,6 +29,7 @@ class StockSmaBot(BaseBot):
     async def _test_price(self, price) -> Union[Result, None]:
         if len(self.historical_ohlcv) < self.min_candles:
             # недостаточно свечек для принятия решения
+            logging.info('%s недостаточно свечек %d' % (self.name, len(self.historical_ohlcv)))
             return
 
         is_short_allowed = self.params.get('is_short_allowed', False)
@@ -41,6 +43,7 @@ class StockSmaBot(BaseBot):
                     or (last_candle.datetime.hour == 16 and last_candle.datetime.minute < 30) \
                     or last_candle.datetime.hour >= 23:
                 # торгуем только в основную сессию
+                logging.info('%s не основное время %s-%s' % (self.name, last_candle.datetime.hour, last_candle.datetime.minute))
                 return
 
         close_array = [float(c.close) for c in self.historical_ohlcv]
@@ -64,13 +67,16 @@ class StockSmaBot(BaseBot):
 
         order_type = None
         if has_trend:
+            logging.info('%s has trend' % self.name)
             if sma_100[-1] > sma_50[-1] > sma_30[-1]:
                 order_type = Signal.SELL if is_short_allowed else close_signal
             else:
                 if price < sma_30[-1] and price > sma_50[-1]:
                     order_type = Signal.BUY
-                # order_type = Signal.BUY
+                else:
+                    logging.info('%s price=%s, sma_30=%s, sma_50=%s' % (self.name, price, sma_30[-1], sma_50[-1]))
         else:
+            logging.info('%s no trend' % self.name)
             if not (sma_100[-1] > sma_50[-1] > sma_30[-1] or sma_100[-1] < sma_50[-1] < sma_30[-1]):
                 order_type = close_signal
 

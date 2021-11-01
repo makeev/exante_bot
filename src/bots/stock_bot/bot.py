@@ -1,3 +1,4 @@
+import logging
 from typing import Union, List
 
 import numpy as np
@@ -43,12 +44,14 @@ class StockBot(BaseBot):
                     or (last_candle.datetime.hour == 16 and last_candle.datetime.minute < 30) \
                     or last_candle.datetime.hour >= 23:
                 # торгуем только в основную сессию
+                logging.info('%s не основное время %s-%s' % (self.name, last_candle.datetime.hour, last_candle.datetime.minute))
                 return
 
         close_array = [float(c.close) for c in self.historical_ohlcv]
         rsi = RSI(np.array(close_array), rsi_length)
 
         order_type = False
+        logging.info('%s rsi[-3] %s' % (self.name, rsi[-3]))
         if not self.overbought and not self.oversold:
             # смотрим не вышел ли RSI за нужные нам пределы
             last_rsi = rsi[-3]
@@ -67,6 +70,7 @@ class StockBot(BaseBot):
         # мы уже в зоне перекупленности/перепроданности
         # ждем когда индикатор вернется обратно, чтобы открыть сделку
         current_rsi = rsi[-2]
+        logging.info('%s rsi[-2] %s' % (self.name, rsi[-2]))
         if self.overbought:
             if current_rsi <= upper_band:
                 self.overbought = False
