@@ -257,7 +257,7 @@ class ExanteApi:
         if not duration:
             duration = 'good_till_cancel'
 
-        return await self.place_order({
+        r = await self.place_order({
             "accountId": account_id,
             "symbolId": symbol,
             "side": side,
@@ -267,6 +267,33 @@ class ExanteApi:
             "takeProfit": str(take_profit),
             "stopLoss": str(stop_loss),
         })
+
+        # костыль, т.к. метод не дает поставить разные duration для stop и market ордеров
+        placed_orders = await r.json()
+        for o in placed_orders:
+            if o['orderParameters']['orderType'] in ['stop', 'limit']:
+                # отменяем старые ордера
+                await self.cancel_order(o['orderId'])
+
+                # ставим новые с правильным duration
+                data = {
+                    "duration": "good_till_cancel",
+                    "quantity": o['orderParameters']['quantity'],
+                    "accountId": self.account_id,
+                    "symbolId": symbol,
+                    "side": o['orderParameters']['side'],
+                    "orderType": o['orderParameters']['orderType'],
+                }
+
+                stop_price = o['orderParameters'].get('stopPrice')
+                if stop_price:
+                    data['stopPrice'] = stop_price
+
+                limit_price = o['orderParameters'].get('limitPrice')
+                if limit_price:
+                    data['limitPrice'] = limit_price
+
+                await self.place_order(data)
 
     async def get_position(self, symbol, account_id=None):
         r = await self.get_summary(account_id=account_id, currency='EUR')
