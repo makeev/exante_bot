@@ -2,7 +2,7 @@ import logging
 from typing import Union, List
 
 import numpy as np
-from talib import RSI
+from talib import RSI, SMA
 
 from bots.base import Result, BaseBot, Signal, Deal, CloseOpenedDeal
 
@@ -12,11 +12,6 @@ class StockBot(BaseBot):
     name = 'stock_bot'
 
     def __init__(self, money_manager, historical_ohlcv: List = None, **params):
-        """
-        params:
-          sma_size - размер SMA для определения тренда
-          trend_len - сколько свечей проверять при определении тренда
-        """
         # прошедшие данные
         self.historical_ohlcv = historical_ohlcv or []
         self.money_manager = money_manager
@@ -37,6 +32,12 @@ class StockBot(BaseBot):
         is_short_allowed = self.params.get('is_short_allowed', False)
         only_main_session = self.params.get('only_main_session', False)
         close_signal = self.params.get('close_signal', Signal.CLOSE)
+        check_trend = self.params.get('check_trend', False)
+        trend_len = self.params.get('trend_len', 2)
+
+        has_trend = False
+        trend_signal = None
+        close_array = [float(c.close) for c in self.historical_ohlcv]
 
         if only_main_session:
             last_candle = self.get_last_candle()
@@ -47,8 +48,30 @@ class StockBot(BaseBot):
                 logging.info('%s не основное время %s-%s' % (self.name, last_candle.datetime.hour, last_candle.datetime.minute))
                 return
 
-        close_array = [float(c.close) for c in self.historical_ohlcv]
         rsi = RSI(np.array(close_array), rsi_length)
+
+        if check_trend:
+            sma_100 = SMA(np.array(close_array), 200)
+            sma_50 = SMA(np.array(close_array), 100)
+
+            # sma_300 = SMA(np.array(close_array), 300)
+            # main_trend = get_trend_for(list(sma_300[-3:]))
+
+            j = -trend_len - 1
+            had_trend = sma_100[j] > sma_50[j] or sma_100[j] < sma_50[j]
+
+            if had_trend:
+                has_trend = True
+                for i in range(1, trend_len + 1):
+                    if not (sma_100[-i] > sma_50[-i] or sma_100[-i] < sma_50[-i]):
+                        has_trend = False
+                        break
+
+                if has_trend:
+                    if sma_100[-1] > sma_50[-1]:
+                        trend_signal = Signal.SELL
+                    else:
+                        trend_signal = Signal.BUY
 
         order_type = False
         logging.info('%s rsi[-3] %s' % (self.name, rsi[-3]))
@@ -81,7 +104,11 @@ class StockBot(BaseBot):
                 order_type = Signal.BUY
 
         if order_type:
-            return Result(signal=order_type, price=price)
+            if check_trend:
+                if trend_signal == order_type:
+                    return Result(signal=order_type, price=price)
+            else:
+                return Result(signal=order_type, price=price)
 
     def add_candle(self, candle):
         """

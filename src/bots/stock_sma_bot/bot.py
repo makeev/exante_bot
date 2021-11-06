@@ -13,11 +13,6 @@ class StockSmaBot(BaseBot):
     name = 'stock_sma_bot'
 
     def __init__(self, money_manager, historical_ohlcv: List = None, **params):
-        """
-        params:
-          sma_size - размер SMA для определения тренда
-          trend_len - сколько свечей проверять при определении тренда
-        """
         # прошедшие данные
         self.historical_ohlcv = historical_ohlcv or []
         self.money_manager = money_manager
@@ -36,6 +31,9 @@ class StockSmaBot(BaseBot):
         trend_len = self.params.get('trend_len', 5)
         only_main_session = self.params.get('only_main_session', False)
         close_signal = self.params.get('close_signal', Signal.CLOSE)
+        high_sma_value = self.params.get("high_sma_value", 100)
+        middle_sma_value = self.params.get("middle_sma_value", 50)
+        low_sma_value = self.params.get("low_sma_value", 30)
 
         if only_main_session:
             last_candle = self.get_last_candle()
@@ -47,37 +45,41 @@ class StockSmaBot(BaseBot):
                 return
 
         close_array = [float(c.close) for c in self.historical_ohlcv]
-        sma_100 = SMA(np.array(close_array), 100)
-        sma_50 = SMA(np.array(close_array), 50)
-        sma_30 = SMA(np.array(close_array), 30)
+        sma_high = SMA(np.array(close_array), high_sma_value)
+        sma_middle = SMA(np.array(close_array), middle_sma_value)
+        sma_low = SMA(np.array(close_array), low_sma_value)
 
         # sma_300 = SMA(np.array(close_array), 300)
         # main_trend = get_trend_for(list(sma_300[-3:]))
 
         j = -trend_len - 1
-        had_trend = sma_100[j] > sma_50[j] > sma_30[j] or sma_100[j] < sma_50[j] < sma_30[j]
+        had_trend = sma_high[j] > sma_middle[j] > sma_low[j] or sma_high[j] < sma_middle[j] < sma_low[j]
 
         has_trend = False
         if had_trend:
             has_trend = True
             for i in range(1, trend_len + 1):
-                if not (sma_100[-i] > sma_50[-i] > sma_30[-i] or sma_100[-i] < sma_50[-i] < sma_30[-i]):
+                if not (sma_high[-i] > sma_middle[-i] > sma_low[-i] or sma_high[-i] < sma_middle[-i] < sma_low[-i]):
                     has_trend = False
                     break
 
         order_type = None
         if has_trend:
             logging.info('%s has trend' % self.name)
-            if sma_100[-1] > sma_50[-1] > sma_30[-1]:
-                order_type = Signal.SELL if is_short_allowed else close_signal
+            if sma_high[-1] > sma_middle[-1] > sma_low[-1]:
+                if price > sma_low[-1] and price < sma_middle[-1]:
+                    order_type = Signal.SELL if is_short_allowed else close_signal
+                else:
+                    logging.info('%s price=%s, sma_30=%s, sma_50=%s' % (self.name, price, sma_low[-1], sma_middle[-1]))
             else:
-                if price < sma_30[-1] and price > sma_50[-1]:
+                order_type = Signal.BUY
+                if price < sma_low[-1] and price > sma_middle[-1]:
                     order_type = Signal.BUY
                 else:
-                    logging.info('%s price=%s, sma_30=%s, sma_50=%s' % (self.name, price, sma_30[-1], sma_50[-1]))
+                    logging.info('%s price=%s, sma_30=%s, sma_50=%s' % (self.name, price, sma_low[-1], sma_middle[-1]))
         else:
             logging.info('%s no trend' % self.name)
-            if not (sma_100[-1] > sma_50[-1] > sma_30[-1] or sma_100[-1] < sma_50[-1] < sma_30[-1]):
+            if not (sma_high[-1] > sma_middle[-1] > sma_low[-1] or sma_high[-1] < sma_middle[-1] < sma_low[-1]):
                 order_type = close_signal
 
         if order_type:

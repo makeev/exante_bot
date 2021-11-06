@@ -7,57 +7,60 @@ from bots.base import CloseOpenedDeal, Signal
 from bots.multibot.bot import MultiBot
 from bots.stock_bot.bot import StockBot
 from bots.stock_sma_bot.bot import StockSmaBot
+from bots.stupid_bot import StupidBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, HistoricalData
 
 api = ExanteApi(**settings.ACCOUNTS['demo_2'])
-symbol = 'URA.ARCA'
+# symbol = 'URA.ARCA'
 # symbol = 'BOTZ.NASDAQ'
 # symbol = 'ARKK.ARCA'
-# symbol = 'COPX.ARCA'
+symbol = 'EUR/NZD.E.FX'
 time_interval = 300
 max_candles = 5000
 update_file = False
-show_plot = False
+show_plot = True
+order_amount = 100000
 
 # инициируем бота которого будем тестировать
 bot_1 = StockSmaBot(
     money_manager=SimpleMoneyManager(
-        order_amount=100,
-        diff=0.2,
-        stop_loss_factor=2,
-        take_profit_factor=8,
+        order_amount=order_amount,
+        diff=0.001,
+        stop_loss_factor=1,
+        take_profit_factor=10,
     ),
     historical_ohlcv=[],
     **{
         "trend_len": 2,
-        "is_short_allowed": False,
-        "only_main_session": True,
-        # "close_signal": Signal.CLOSE,
+        "is_short_allowed": True,
+        "only_main_session": False,
         "close_signal": None,
-        # "high_sma_value": 150,
-        # "middle_sma_value": 60,
-        # "low_sma_value": 20,
+        "high_sma_value": 200,
+        "middle_sma_value": 100,
+        "low_sma_value": 50,
     }
 )
 bot_2 = StockBot(
     money_manager=SimpleMoneyManager(
-        order_amount=100,
-        diff=0.2,
+        order_amount=order_amount,
+        diff=0.001,
         stop_loss_factor=1,
-        take_profit_factor=8,
+        take_profit_factor=3,
     ),
     historical_ohlcv=[],
     **{
-        "upper_band": 73,
-        "lower_band": 28,
-        "is_short_allowed": False,
-        "only_main_session": True,
+        "upper_band": 75,
+        "lower_band": 25,
+        "is_short_allowed": True,
+        "only_main_session": False,
         "close_signal": Signal.CLOSE,
         # "close_signal": None,
+        "check_trend": False,
+        "trend_len": 2,
     }
 )
-bot = MultiBot(bot_1, bot_2)
+bot = MultiBot(bot_2)
 
 
 class Tester:
@@ -177,21 +180,7 @@ class Tester:
                     if possible_deal:
                         # если уже есть открытая сделка
                         if open_deal:
-                            # если новая сделка в другую сторону
-                            if open_deal.side != possible_deal.side:
-                                pass
-                                # то закрываем старую сделку и открываем новую
-                                # profit = open_deal.close(price)
-                                # if profit is not None:
-                                #     # закрываем сделку и наносим на график
-                                #     self._handle_deal_profit(profit, dt, price)
-                                #
-                                # open_deal = possible_deal
-                                # self._add_deal_to_chart(open_deal, dt)
-                            else:
-                                # сделка в ту же сторону что и уже открытая
-                                # @TODO возможно есть смысл переоткрыть сделку
-                                pass
+                            pass
                         else:
                             open_deal = possible_deal
                             self._add_deal_to_chart(open_deal, dt)

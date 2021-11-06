@@ -41,14 +41,15 @@ class StupidBot(BaseBot):
         # отключаем дополнительные проверки, если пинбар ну очень хорош
         disable_extra_check = super_pinbar_size and last_candle.is_long_pinbar(super_pinbar_size)
 
-        # if last_candle.tail > 5:
-        #     # короткая тень должна быть короткой
-        #     return
+        if last_candle.tail > 0.00002:
+            # короткая тень должна быть короткой
+            return
 
-        if last_candle.body_size < 20:
+        if last_candle.body_size < 0.0001:
             # слишком маленькая свеча
             return
 
+        print(last_candle.tail)
         # определяем тренд по SMA закрытия
         close_array = [float(c.close) for c in self.historical_ohlcv]
         sma = SMA(np.array(close_array), sma_size)
