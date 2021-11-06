@@ -14,7 +14,7 @@ from helpers import get_mid_price, send_admin_message
 
 import settings
 
-symbol = 'URA.ARCA'
+symbol = 'EUR/NZD.E.FX'
 account_name = 'demo_2'
 prefix = '#exante #%s #%s' % (symbol, account_name)
 time_interval = 300
