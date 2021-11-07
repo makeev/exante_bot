@@ -17,7 +17,7 @@ api = ExanteApi(**settings.ACCOUNTS['demo_2'])
 # symbol = 'ARKK.ARCA'
 symbol = 'EUR/NZD.E.FX'
 time_interval = 300
-max_candles = 5000
+max_candles = 2500
 update_file = False
 show_plot = True
 order_amount = 100000
@@ -36,9 +36,6 @@ bot_1 = StockSmaBot(
         "is_short_allowed": True,
         "only_main_session": False,
         "close_signal": None,
-        "high_sma_value": 200,
-        "middle_sma_value": 100,
-        "low_sma_value": 50,
     }
 )
 bot_2 = StockBot(
@@ -56,8 +53,8 @@ bot_2 = StockBot(
         "only_main_session": False,
         "close_signal": Signal.CLOSE,
         # "close_signal": None,
-        "check_trend": False,
-        "trend_len": 2,
+        "check_trend": True,
+        "max_adx": 35,
     }
 )
 bot = MultiBot(bot_2)
@@ -137,7 +134,8 @@ class Tester:
 
     async def do(self):
         try:
-            filename = 'history_%s' % symbol.replace('/', '_')
+            # filename = 'history_%s' % symbol.replace('/', '_')
+            filename = "./fx_eur_nzd_5min.jsonl"
 
             if update_file:
                 r = await api.get_ohlcv(symbol, time_interval, size=5000)
@@ -149,7 +147,9 @@ class Tester:
                 with open(filename, 'r') as json_file:
                     data = json.load(json_file)
 
-            data = data[:max_candles]
+            # data = data[7500:10000]
+            # data = data[:10000]
+            data = data[:5000]
             historical_data = HistoricalData(time_interval, data)
             # fig = historical_data.get_plotly_figure()
             # fig.show()

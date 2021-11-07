@@ -18,7 +18,7 @@ symbol = 'URA.ARCA'
 time_interval = 300
 max_candles = 5000
 update_file = False
-show_plot = False
+show_plot = True
 
 # инициируем бота которого будем тестировать
 bot_1 = StockSmaBot(

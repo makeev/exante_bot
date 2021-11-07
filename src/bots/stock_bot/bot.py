@@ -2,13 +2,13 @@ import logging
 from typing import Union, List
 
 import numpy as np
-from talib import RSI, SMA
+from talib import RSI, SMA, ADX, ADXR
 
 from bots.base import Result, BaseBot, Signal, Deal, CloseOpenedDeal
 
 
 class StockBot(BaseBot):
-    min_candles = 10
+    min_candles = 28
     name = 'stock_bot'
 
     def __init__(self, money_manager, historical_ohlcv: List = None, **params):
@@ -33,7 +33,7 @@ class StockBot(BaseBot):
         only_main_session = self.params.get('only_main_session', False)
         close_signal = self.params.get('close_signal', Signal.CLOSE)
         check_trend = self.params.get('check_trend', False)
-        trend_len = self.params.get('trend_len', 2)
+        max_adx = self.params.get('max_adx', 50)
 
         has_trend = False
         trend_signal = None
@@ -51,27 +51,41 @@ class StockBot(BaseBot):
         rsi = RSI(np.array(close_array), rsi_length)
 
         if check_trend:
-            sma_100 = SMA(np.array(close_array), 200)
-            sma_50 = SMA(np.array(close_array), 100)
-
-            # sma_300 = SMA(np.array(close_array), 300)
-            # main_trend = get_trend_for(list(sma_300[-3:]))
-
-            j = -trend_len - 1
-            had_trend = sma_100[j] > sma_50[j] or sma_100[j] < sma_50[j]
-
-            if had_trend:
+            # sma_100 = SMA(np.array(close_array), 100)
+            # sma_50 = SMA(np.array(close_array), 50)
+            # sma_30 = SMA(np.array(close_array), 30)
+            #
+            # j = -trend_len - 1
+            # had_trend = sma_100[j] > sma_50[j] > sma_30[j] or sma_100[j] < sma_50[j] < sma_30[j]
+            #
+            # if had_trend:
+            #     has_trend = True
+            #     for i in range(1, trend_len + 1):
+            #         if not (sma_100[-i] > sma_50[-i] > sma_30[-i] or sma_100[-i] < sma_50[-i] < sma_30[-i]):
+            #             has_trend = False
+            #             break
+            high_array = [float(c.high) for c in self.historical_ohlcv]
+            low_array = [float(c.low) for c in self.historical_ohlcv]
+            adx = ADX(
+                np.array(high_array),
+                np.array(low_array),
+                np.array(close_array),
+                14
+            )
+            adxr = ADXR(
+                np.array(high_array),
+                np.array(low_array),
+                np.array(close_array),
+                14
+            )
+            last_adx = adx[-1]
+            last_adxr = adxr[-1]
+            if last_adx > max_adx > last_adxr:
                 has_trend = True
-                for i in range(1, trend_len + 1):
-                    if not (sma_100[-i] > sma_50[-i] or sma_100[-i] < sma_50[-i]):
-                        has_trend = False
-                        break
 
-                if has_trend:
-                    if sma_100[-1] > sma_50[-1]:
-                        trend_signal = Signal.SELL
-                    else:
-                        trend_signal = Signal.BUY
+            if has_trend:
+                # очень сильный тренд, не входим в сделку
+                return None
 
         order_type = False
         logging.info('%s rsi[-3] %s' % (self.name, rsi[-3]))
@@ -104,11 +118,7 @@ class StockBot(BaseBot):
                 order_type = Signal.BUY
 
         if order_type:
-            if check_trend:
-                if trend_signal == order_type:
-                    return Result(signal=order_type, price=price)
-            else:
-                return Result(signal=order_type, price=price)
+            return Result(signal=order_type, price=price)
 
     def add_candle(self, candle):
         """

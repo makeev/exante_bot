@@ -44,8 +44,8 @@ def bot_factory(historical_data):
             "only_main_session": False,
             "close_signal": Signal.CLOSE,
             # "close_signal": None,
-            "check_trend": False,
-            "trend_len": 2,
+            "check_trend": True,
+            "max_adx": 35
         }
     )
     # инициируем бота которым будем торговать
