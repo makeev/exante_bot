@@ -95,6 +95,8 @@ class Processor:
                         except (PositionAlreadyClosed, PositionNotFound):
                             position = None
 
+                        logging.info('position: %s' % position)
+
                         # открываем новую позицию
                         if not position:
                             await self.api.open_position(
