@@ -33,15 +33,15 @@ def bot_factory(historical_data):
         money_manager=SimpleMoneyManager(
             order_amount=300,
             diff=0.2,
-            stop_loss_factor=2,
-            take_profit_factor=8,
+            stop_loss_factor=10,
+            take_profit_factor=20,
         ),
         historical_ohlcv=historical_data,
         **{
             "trend_len": 2,
             "is_short_allowed": False,
             "only_main_session": True,
-            "close_signal": None
+            "close_signal": Signal.CLOSE
         }
     )
     bot_2 = StockBot(
@@ -137,27 +137,27 @@ class Processor:
                             await send_admin_message('%s close position signal' % symbol, prefix=prefix)
 
             # проверяем можно ли двинуть в безубыток
-            last_candle = self.bot.get_last_candle()
-
-            if not last_candle:
-                pass
-            elif last_candle.datetime.hour < 16 \
-                    or (last_candle.datetime.hour == 16 and last_candle.datetime.minute < 30) \
-                    or last_candle.datetime.hour >= 23:
-                # торгуем только в основную сессию
-                pass
-            else:
-                time_since_last_check = time.time() - self.last_check_ts
-                if time_since_last_check > 10:  # не чаще раз в 10с
-                    self.last_check_ts = time.time()
-                    try:
-                        position = await self.api.get_position(symbol)
-                        if position and float(position['convertedPnl']) >= breakeven_profit:
-                            await self.api.move_to_breakeven(symbol)
-                    except PositionOrdersNotFound:
-                        await send_admin_message('PositionOrdersNotFound: %s' % position, prefix=prefix)
-                    except AssertionError as e:
-                        await send_admin_message('AssertionError: %s' % str(e), prefix=prefix)
+            # last_candle = self.bot.get_last_candle()
+            #
+            # if not last_candle:
+            #     pass
+            # elif last_candle.datetime.hour < 16 \
+            #         or (last_candle.datetime.hour == 16 and last_candle.datetime.minute < 30) \
+            #         or last_candle.datetime.hour >= 23:
+            #     # торгуем только в основную сессию
+            #     pass
+            # else:
+            #     time_since_last_check = time.time() - self.last_check_ts
+            #     if time_since_last_check > 10:  # не чаще раз в 10с
+            #         self.last_check_ts = time.time()
+            #         try:
+            #             position = await self.api.get_position(symbol)
+            #             if position and float(position['convertedPnl']) >= breakeven_profit:
+            #                 await self.api.move_to_breakeven(symbol)
+            #         except PositionOrdersNotFound:
+            #             await send_admin_message('PositionOrdersNotFound: %s' % position, prefix=prefix)
+            #         except AssertionError as e:
+            #             await send_admin_message('AssertionError: %s' % str(e), prefix=prefix)
 
 
 async def main():
