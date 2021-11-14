@@ -33,8 +33,8 @@ def bot_factory(historical_data):
         money_manager=SimpleMoneyManager(
             order_amount=300,
             diff=0.2,
-            stop_loss_factor=10,
-            take_profit_factor=20,
+            stop_loss_factor=2,
+            take_profit_factor=8,
         ),
         historical_ohlcv=historical_data,
         **{
@@ -61,7 +61,7 @@ def bot_factory(historical_data):
         }
     )
     # инициируем бота которым будем торговать
-    return MultiBot(bot_1, bot_2)
+    return MultiBot(bot_1)
 
 
 class Processor:

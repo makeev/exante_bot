@@ -3,7 +3,7 @@ import time
 
 import ujson
 
-filepath = './1yr_eur_nzd_5min.csv'
+filepath = 'data/1yr_aapl_5min.csv'
 
 json_l = []
 with open(filepath) as csvfile:
@@ -40,5 +40,5 @@ with open(filepath) as csvfile:
 
 if len(json_l) > 0:
     json_l = list(reversed(json_l))
-    with open("./fx_eur_nzd_5min.jsonl", 'w+') as output_file:
+    with open("data/aapl_5min.jsonl", 'w+') as output_file:
         ujson.dump(json_l, output_file)

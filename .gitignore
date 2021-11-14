@@ -21,3 +21,4 @@ pip-delete-this-directory.txt
 *_local*
 history_*
 *.ipynb
+data/

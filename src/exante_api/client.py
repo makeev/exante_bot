@@ -154,12 +154,19 @@ class ExanteApi:
                 raise e
         return events
 
-    async def get_ohlcv(self, symbol_id, duration, size=60, silent=False):
+    async def get_ohlcv(self, symbol_id, duration, size=60, from_ts=None, to_ts=None, silent=False):
         """
         Получение исторических данных
         """
         url = self.get_url('ohlc', [symbol_id, duration], 'md')
-        r = await self.client.get(url, params={"size": size})
+
+        params = {"size": size}
+        if from_ts is not None:
+            params['from'] = from_ts
+        if to_ts is not None:
+            params['to'] = to_ts
+
+        r = await self.client.get(url, params=params)
         return await self.process_response(r, silent)
 
     async def get_accounts(self):

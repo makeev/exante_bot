@@ -106,10 +106,10 @@ class Tester:
                 r = await api.get_ohlcv(symbol, time_interval, size=5000)
                 data = await r.json()
 
-                with open('history_eur_nzd.json', 'w+') as output_file:
+                with open('data/history_eur_nzd.json', 'w+') as output_file:
                     json.dump(data, output_file)
             else:
-                with open("history_eur_nzd.json", 'r') as json_file:
+                with open("data/history_eur_nzd.json", 'r') as json_file:
                     data = json.load(json_file)
 
             data = data[:max_candles]

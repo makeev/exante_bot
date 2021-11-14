@@ -94,7 +94,7 @@ class Tester:
             # with open('history_btc_usd.json', 'w+') as output_file:
             #     json.dump(data, output_file)
 
-            with open("history_btc_usd.json", 'r') as json_file:
+            with open("data/history_btc_usd.json", 'r') as json_file:
                 data = json.load(json_file)
 
             data = data[:5000]

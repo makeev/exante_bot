@@ -3,6 +3,8 @@ import json
 from decimal import Decimal
 
 import settings
+from pymongo import MongoClient
+from slugify import slugify
 from bots.base import CloseOpenedDeal, Signal
 from bots.multibot.bot import MultiBot
 from bots.stock_bot.bot import StockBot
@@ -16,9 +18,11 @@ symbol = 'URA.ARCA'
 # symbol = 'ARKK.ARCA'
 # symbol = 'COPX.ARCA'
 time_interval = 300
-max_candles = 5000
-update_file = False
+max_candles = 30000
 show_plot = True
+
+MONGO_HOST = 'localhost'
+MONGO_PORT = 27017
 
 # инициируем бота которого будем тестировать
 bot_1 = StockSmaBot(
@@ -33,8 +37,8 @@ bot_1 = StockSmaBot(
         "trend_len": 2,
         "is_short_allowed": False,
         "only_main_session": True,
-        # "close_signal": Signal.CLOSE,
-        "close_signal": None,
+        "close_signal": Signal.CLOSE,
+        # "close_signal": None,
         # "high_sma_value": 150,
         # "middle_sma_value": 60,
         # "low_sma_value": 20,
@@ -45,7 +49,7 @@ bot_2 = StockBot(
         order_amount=100,
         diff=0.2,
         stop_loss_factor=1,
-        take_profit_factor=8,
+        take_profit_factor=3,
     ),
     historical_ohlcv=[],
     **{
@@ -53,11 +57,11 @@ bot_2 = StockBot(
         "lower_band": 28,
         "is_short_allowed": False,
         "only_main_session": True,
-        "close_signal": Signal.CLOSE,
-        # "close_signal": None,
+        # "close_signal": Signal.CLOSE,
+        "close_signal": None,
     }
 )
-bot = MultiBot(bot_1, bot_2)
+bot = MultiBot(bot_1)
 
 
 class Tester:
@@ -134,19 +138,13 @@ class Tester:
 
     async def do(self):
         try:
-            filename = 'history_%s' % symbol.replace('/', '_')
+            collection_name = slugify('exante_%s_%s' % (symbol, time_interval))
+            mongo = MongoClient(MONGO_HOST, MONGO_PORT)
+            db = mongo.ohlcv
+            collection = db[collection_name]
 
-            if update_file:
-                r = await api.get_ohlcv(symbol, time_interval, size=5000)
-                data = await r.json()
+            data = list(collection.find())
 
-                with open(filename, 'w+') as output_file:
-                    json.dump(data, output_file)
-            else:
-                with open(filename, 'r') as json_file:
-                    data = json.load(json_file)
-
-            data = data[:max_candles]
             historical_data = HistoricalData(time_interval, data)
             # fig = historical_data.get_plotly_figure()
             # fig.show()
