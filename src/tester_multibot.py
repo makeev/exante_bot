@@ -27,7 +27,7 @@ MONGO_PORT = 27017
 # инициируем бота которого будем тестировать
 bot_1 = StockSmaBot(
     money_manager=SimpleMoneyManager(
-        order_amount=100,
+        order_amount=300,
         diff=0.2,
         stop_loss_factor=2,
         take_profit_factor=8,
@@ -35,13 +35,13 @@ bot_1 = StockSmaBot(
     historical_ohlcv=[],
     **{
         "trend_len": 2,
-        "is_short_allowed": False,
+        "is_short_allowed": True,
         "only_main_session": True,
         "close_signal": Signal.CLOSE,
         # "close_signal": None,
-        # "high_sma_value": 150,
-        # "middle_sma_value": 60,
-        # "low_sma_value": 20,
+        "high_sma_value": 100,
+        "middle_sma_value": 50,
+        "low_sma_value": 30,
     }
 )
 bot_2 = StockBot(
@@ -53,12 +53,12 @@ bot_2 = StockBot(
     ),
     historical_ohlcv=[],
     **{
-        "upper_band": 73,
-        "lower_band": 28,
-        "is_short_allowed": False,
+        "upper_band": 85,
+        "lower_band": 15,
+        "is_short_allowed": True,
         "only_main_session": True,
-        # "close_signal": Signal.CLOSE,
-        "close_signal": None,
+        "close_signal": Signal.CLOSE,
+        # "close_signal": None,
     }
 )
 bot = MultiBot(bot_1)
@@ -143,7 +143,7 @@ class Tester:
             db = mongo.ohlcv
             collection = db[collection_name]
 
-            data = list(collection.find())
+            data = list(collection.find())[:-5000]
 
             historical_data = HistoricalData(time_interval, data)
             # fig = historical_data.get_plotly_figure()
@@ -177,15 +177,14 @@ class Tester:
                         if open_deal:
                             # если новая сделка в другую сторону
                             if open_deal.side != possible_deal.side:
-                                pass
                                 # то закрываем старую сделку и открываем новую
-                                # profit = open_deal.close(price)
-                                # if profit is not None:
-                                #     # закрываем сделку и наносим на график
-                                #     self._handle_deal_profit(profit, dt, price)
-                                #
-                                # open_deal = possible_deal
-                                # self._add_deal_to_chart(open_deal, dt)
+                                profit = open_deal.close(price)
+                                if profit is not None:
+                                    # закрываем сделку и наносим на график
+                                    self._handle_deal_profit(profit, dt, price)
+
+                                open_deal = possible_deal
+                                self._add_deal_to_chart(open_deal, dt)
                             else:
                                 # сделка в ту же сторону что и уже открытая
                                 # @TODO возможно есть смысл переоткрыть сделку

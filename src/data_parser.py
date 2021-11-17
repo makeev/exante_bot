@@ -55,10 +55,6 @@ async def main(symbol, time_interval, from_date=None, to_date=None):
                 print('last ts %s' % last_parsed_ts)
                 break
 
-            if len(data) < max_ohlcv_size:
-                print('%d rows returned, stop' % len(data))
-                break
-
             mongo_requests = []
             for row in data:
                 last_parsed_ts = row['timestamp']
@@ -68,6 +64,10 @@ async def main(symbol, time_interval, from_date=None, to_date=None):
                 mongo_requests.append(ReplaceOne({"timestamp": last_parsed_ts}, row, upsert=True))
 
             collection.bulk_write(mongo_requests)
+
+            if len(data) < max_ohlcv_size:
+                print('%d rows returned, stop' % len(data))
+                break
 
             from_ts = last_parsed_ts
         except TooManyRequests:

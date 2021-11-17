@@ -39,9 +39,9 @@ def bot_factory(historical_data):
         historical_ohlcv=historical_data,
         **{
             "trend_len": 2,
-            "is_short_allowed": False,
+            "is_short_allowed": True,
             "only_main_session": True,
-            "close_signal": Signal.CLOSE
+            # "close_signal": Signal.CLOSE
         }
     )
     bot_2 = StockBot(
