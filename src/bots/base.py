@@ -183,11 +183,13 @@ class Deal:
             return
 
         # будем пессимистами и сначала проверяем свечу на убыток
-        if candle.price_range[0] <= self.stop_loss <= candle.price_range[1]:
-            return self.close(self.stop_loss)
+        if self.stop_loss:
+            if candle.price_range[0] <= self.stop_loss <= candle.price_range[1]:
+                return self.close(self.stop_loss)
 
-        if candle.price_range[0] <= self.take_profit <= candle.price_range[1]:
-            return self.close(self.take_profit)
+        if self.take_profit:
+            if candle.price_range[0] <= self.take_profit <= candle.price_range[1]:
+                return self.close(self.take_profit)
 
     def is_open(self):
         return self.status == 'open'

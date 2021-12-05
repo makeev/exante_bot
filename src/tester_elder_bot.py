@@ -1,14 +1,13 @@
 import asyncio
-import json
 from decimal import Decimal
 
-import settings
 from pymongo import MongoClient
 from slugify import slugify
+
+import settings
 from bots.base import CloseOpenedDeal, Signal
+from bots.elder_bot.bot import ElderBot
 from bots.multibot.bot import MultiBot
-from bots.stock_bot.bot import StockBot
-from bots.stock_sma_bot.bot import StockSmaBot
 from bots.stupid_bot.money_manager import SimpleMoneyManager
 from exante_api import ExanteApi, HistoricalData
 
@@ -18,47 +17,25 @@ symbol = 'URA.ARCA'
 # symbol = 'ARKK.ARCA'
 # symbol = 'COPX.ARCA'
 time_interval = 300
-max_candles = 5000
+max_candles = 10000
 show_plot = True
 
 MONGO_HOST = 'localhost'
 MONGO_PORT = 27017
 
 # инициируем бота которого будем тестировать
-bot_1 = StockSmaBot(
+bot_1 = ElderBot(
     money_manager=SimpleMoneyManager(
         order_amount=300,
         diff=0.2,
-        stop_loss_factor=2,
-        take_profit_factor=8,
+        stop_loss_factor=5,
+        take_profit_factor=22,
     ),
     historical_ohlcv=[],
     **{
-        "trend_len": 2,
         "is_short_allowed": True,
         "only_main_session": True,
         "close_signal": Signal.CLOSE,
-        # "close_signal": None,
-        "high_sma_value": 100,
-        "middle_sma_value": 50,
-        "low_sma_value": 30,
-    }
-)
-bot_2 = StockBot(
-    money_manager=SimpleMoneyManager(
-        order_amount=100,
-        diff=0.2,
-        stop_loss_factor=1,
-        take_profit_factor=3,
-    ),
-    historical_ohlcv=[],
-    **{
-        "upper_band": 80,
-        "lower_band": 20,
-        "is_short_allowed": True,
-        "only_main_session": True,
-        "close_signal": Signal.CLOSE,
-        # "close_signal": None,
     }
 )
 bot = MultiBot(bot_1)
@@ -119,22 +96,24 @@ class Tester:
             )
         )
         # рисуем stop loss и take profit
-        self.annotations.append(
-            dict(
-                x=date, y=deal.stop_loss, xref='x', yref='y',
-                showarrow=True, xanchor='center', text='sl',
-                font=dict(color="red"), arrowcolor="red",
-                arrowhead=2, hovertext=str(deal.stop_loss)
+        if deal.stop_loss:
+            self.annotations.append(
+                dict(
+                    x=date, y=deal.stop_loss, xref='x', yref='y',
+                    showarrow=True, xanchor='center', text='sl',
+                    font=dict(color="red"), arrowcolor="red",
+                    arrowhead=2, hovertext=str(deal.stop_loss)
+                )
             )
-        )
-        self.annotations.append(
-            dict(
-                x=date, y=deal.take_profit, xref='x', yref='y',
-                showarrow=True, xanchor='center', text='tp',
-                font=dict(color="green"), arrowcolor="green",
-                arrowhead=2, hovertext=str(deal.take_profit)
+        if deal.take_profit:
+            self.annotations.append(
+                dict(
+                    x=date, y=deal.take_profit, xref='x', yref='y',
+                    showarrow=True, xanchor='center', text='tp',
+                    font=dict(color="green"), arrowcolor="green",
+                    arrowhead=2, hovertext=str(deal.take_profit)
+                )
             )
-        )
 
     async def do(self):
         try:
@@ -149,13 +128,13 @@ class Tester:
 
             historical_data = HistoricalData(
                 time_interval, data,
-                # sma=[{"len": 100, "color": "blue", "width": 2}],
-                rsi={"len": 14, "color": "purple", "width": 1, "limits": [80, 20]},
+                sma=[{"len": 14, "color": "red", "width": 1}],
+                # rsi={"len": 14, "color": "purple", "width": 1, "limits": [80, 20]},
                 day_ema=True
             )
-            fig = historical_data.get_plotly_figure()
-            fig.show()
-            exit()
+            # fig = historical_data.get_plotly_figure()
+            # fig.show()
+            # exit()
 
             fig = historical_data.get_plotly_figure()
             open_deal = None

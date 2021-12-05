@@ -18,8 +18,11 @@ class SimpleMoneyManager:
         """
         return self.order_amount
 
-    def get_stop_loss(self, signal, price, factor=None) -> Decimal:
-        factor = Decimal(factor or self.stop_loss_factor)
+    def get_stop_loss(self, signal, price, factor=None):
+        factor = factor or self.stop_loss_factor
+        if not factor:
+            return
+        factor = Decimal(factor)
 
         if signal == Signal.BUY:
             stop_loss = Decimal(price) - Decimal(self.diff * factor)
@@ -28,8 +31,12 @@ class SimpleMoneyManager:
 
         return stop_loss
 
-    def get_take_profit(self, signal, price, factor=None) -> Decimal:
-        factor = Decimal(factor or self.take_profit_factor)
+    def get_take_profit(self, signal, price, factor=None):
+        factor = factor or self.take_profit_factor
+        if not factor:
+            return
+
+        factor = Decimal(factor)
 
         if signal == Signal.BUY:
             return Decimal(price) + Decimal(self.diff * factor)
