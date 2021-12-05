@@ -21,20 +21,20 @@ class ElderBot(BaseBot):
         # прошедшие данные
         self.historical_ohlcv = historical_ohlcv or []
         self.day_ohlc_data = {}
-        for row in self.historical_ohlcv:
-            ts = row['timestamp']
-            d = date.fromtimestamp(ts // 1000)
+        for candle in self.historical_ohlcv:
+            ts = candle.timestamp
+            d = date.fromtimestamp(ts)
             self.day_ohlc_data.setdefault(d,
                 {
-                    "open": row['open'],
-                    "high": row['high'],
-                    "low": row['low'],
-                    "close": row['close']
+                    "open": candle.open,
+                    "high": candle.high,
+                    "low": candle.low,
+                    "close": candle.close
                 }
             )
-            self.day_ohlc_data[d]['high'] = max(self.day_ohlc_data[d]['high'], row['high'])
-            self.day_ohlc_data[d]['low'] = min(self.day_ohlc_data[d]['low'], row['low'])
-            self.day_ohlc_data[d]['close'] = row['close']
+            self.day_ohlc_data[d]['high'] = max(self.day_ohlc_data[d]['high'], candle.high)
+            self.day_ohlc_data[d]['low'] = min(self.day_ohlc_data[d]['low'], candle.low)
+            self.day_ohlc_data[d]['close'] = candle.close
 
         self.money_manager = money_manager
         self.params = params
@@ -47,8 +47,6 @@ class ElderBot(BaseBot):
     async def _test_price(self, price) -> Union[Result, None]:
         # конфигурируемые параметры
         rsi_length = self.params.get('rsi_length', 14)
-        upper_band = self.params.get('upper_band', 90)
-        lower_band = self.params.get('lower_band', 10)
         only_main_session = self.params.get('only_main_session', False)
         close_signal = self.params.get('close_signal', Signal.CLOSE)
         is_short_allowed = self.params.get('is_short_allowed', False)
@@ -78,17 +76,11 @@ class ElderBot(BaseBot):
 
         if last_sma > last_ema:
             order_type = Signal.BUY
-            # if self.last_order_type != order_type:
-            #     if last_sma - last_ema < price_threshold:
-            #         order_type = None
         else:
-            order_type = Signal.SELL
-            # if self.last_order_type != order_type:
-            #     if last_ema - last_sma < price_threshold:
-            #         order_type = None
+            order_type = Signal.SELL if is_short_allowed else close_signal
 
-        # if rsi[-1] > 90 or rsi[-1] < 10:
-        #     order_type = close_signal
+        if rsi[-1] > 88 or rsi[-1] < 12:
+            order_type = close_signal
 
         if order_type:
             self.last_order_type = order_type
